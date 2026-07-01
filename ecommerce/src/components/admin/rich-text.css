@@ -1,0 +1,90 @@
+.tiptap {
+  outline: none;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #2C2C2C;
+}
+
+.tiptap:focus {
+  outline: none;
+}
+
+.tiptap p {
+  margin: 0 0 0.4em;
+}
+
+.tiptap p:last-child {
+  margin-bottom: 0;
+}
+
+.tiptap ul,
+.tiptap ol {
+  padding-left: 1.5em;
+  margin: 0.25em 0;
+}
+
+.tiptap blockquote {
+  border-left: 3px solid #6B7F5E;
+  margin: 0.5em 0;
+  padding-left: 1em;
+  font-style: italic;
+}
+
+.tiptap h2,
+.tiptap h3,
+.tiptap h4 {
+  margin: 0.5em 0 0.25em;
+  font-family: Georgia, serif;
+}
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: #aaa;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap mark {
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.tiptap strong {
+  font-weight: 700;
+}
+
+.tiptap em {
+  font-style: italic;
+}
+
+.tiptap u {
+  text-decoration: underline;
+}
+
+.tiptap s {
+  text-decoration: line-through;
+}
+
+.tiptap [data-node-view-wrapper] {
+  display: inline;
+}
+
+.tiptap span[data-icon] {
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  justify-content: center;
+  width: 1.2em;
+  height: 1.2em;
+  margin: 0 2px;
+  color: #6B7F5E;
+}
+
+.ProseMirror {
+  outline: none !important;
+}
+
+.ProseMirror:focus {
+  outline: none !important;
+}

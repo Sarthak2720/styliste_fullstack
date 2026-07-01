@@ -1,0 +1,2172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Human Body Measurement System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- MediaPipe Pose -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <!-- Three.js and OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 50%, #12131C 0%, #08090D 100%);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: rgba(99, 102, 241, 0.15);
+            --accent: #14b8a6;
+            --accent-light: rgba(20, 184, 166, 0.15);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-blur: blur(16px);
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-x: hidden;
+        }
+
+        /* Ambient background glow */
+        .glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+            top: -10%;
+            left: -10%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .glow-right {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(20, 184, 166, 0.06) 0%, rgba(0, 0, 0, 0) 70%);
+            bottom: -5%;
+            right: -5%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        header {
+            padding: 2rem 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(8, 9, 13, 0.5);
+            backdrop-filter: blur(8px);
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 30%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        main {
+            flex-grow: 1;
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+            display: grid;
+            grid-template-columns: 1.2fr 1.8fr;
+            gap: 2.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glass Panel Styling */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            height: fit-content;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .panel-title i {
+            color: var(--primary);
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 1rem;
+            color: var(--text-muted);
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.8rem 1rem 0.8rem 2.8rem;
+            font-family: inherit;
+            font-size: 1rem;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Upload Area */
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .upload-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .upload-box {
+            position: relative;
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+        }
+
+        .upload-box:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.03);
+        }
+
+        .upload-box.dragover {
+            border-color: var(--accent);
+            background: rgba(20, 184, 166, 0.05);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            transition: color 0.3s ease;
+        }
+
+        .upload-box:hover .upload-icon {
+            color: var(--primary);
+        }
+
+        .upload-text {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+        }
+
+        .upload-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .image-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 14px;
+            object-fit: cover;
+            display: none;
+            z-index: 5;
+        }
+
+        .preview-active .image-preview {
+            display: block;
+        }
+
+        .preview-active .upload-content {
+            opacity: 0;
+            z-index: 1;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--border-color);
+            color: #ef4444;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            display: none;
+            transition: all 0.2s ease;
+        }
+
+        .preview-active .remove-btn {
+            display: flex;
+        }
+
+        .remove-btn:hover {
+            background: #ef4444;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* Action Buttons */
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            background: var(--border-color);
+            color: var(--text-muted);
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Results view states */
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 400px;
+        }
+
+        .state-empty {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .state-empty i {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.4;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .state-loading {
+            display: none;
+            flex-grow: 1;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(99, 102, 241, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .state-error {
+            display: none;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: #fca5a5;
+        }
+        
+        .state-error i {
+            margin-right: 0.5rem;
+        }
+
+        .state-success {
+            display: none;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Results dashboard grid */
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            border-color: var(--primary-hover);
+            background: rgba(99, 102, 241, 0.02);
+            transform: translateY(-2px);
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .info-card.accent-card .card-icon {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .card-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .card-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .card-unit {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-left: 2px;
+        }
+
+        /* Debug details */
+        .debug-panel {
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .debug-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .debug-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .debug-item {
+            font-size: 0.8rem;
+        }
+
+        .debug-label {
+            color: var(--text-muted);
+        }
+
+        .debug-val {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            background: rgba(8, 9, 13, 0.3);
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Camera Modal & Live Guidance Styles */
+        .camera-btn {
+            margin-top: 0.75rem;
+            background: var(--primary-light);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            color: #a5b4fc;
+            padding: 0.4rem 0.8rem;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .camera-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .camera-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(8, 9, 13, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .camera-modal-content {
+            width: 100%;
+            max-width: 960px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--card-shadow);
+        }
+
+        .camera-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .camera-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .close-camera-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .close-camera-btn:hover {
+            color: #ef4444;
+        }
+
+        .camera-body {
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .camera-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: black;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
+        }
+
+        #webcam {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        #camera-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            transform: scaleX(-1);
+        }
+
+        .gyro-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gyro-target {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px dashed var(--accent);
+            border-radius: 50%;
+        }
+
+        .gyro-bubble {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            transition: transform 0.1s ease, background-color 0.2s ease;
+        }
+
+        .gyro-bubble.aligned {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .guidance-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            justify-content: space-between;
+        }
+
+        .guidance-section {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
+        }
+
+        .guidance-section h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-indicator.valid {
+            background: rgba(20, 184, 166, 0.1);
+            color: var(--accent);
+        }
+
+        .status-indicator.invalid {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+        }
+
+        .guidance-detail {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .pose-checks {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .pose-check-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .pose-check-item.valid {
+            color: var(--text-main);
+        }
+
+        .pose-check-item.valid .status-icon {
+            color: var(--accent);
+        }
+
+        .pose-check-item.invalid .status-icon {
+            color: #ef4444;
+        }
+
+        .autocapture-timer {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-align: center;
+            margin-bottom: 0.75rem;
+            animation: pulse 1s infinite alternate;
+        }
+
+        /* 3D Viewport & Split Layout Styling */
+        .results-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .results-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        .avatar-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 3/4;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="glow"></div>
+    <div class="glow-right"></div>
+
+    <header>
+        <h1>AI Human Body Measurements</h1>
+        <p>Upload a front pose image (and an optional side pose) with your height to estimate precise measurements using computer vision and depth AI models.</p>
+    </header>
+
+    <main>
+        <!-- INPUT CONTROL PANEL -->
+        <section class="glass-panel">
+            <h2 class="panel-title"><i class="fa-solid fa-sliders"></i> Parameters & Images</h2>
+            
+            <form id="measurement-form" onsubmit="handleSubmit(event)">
+                <!-- Height input -->
+                <div class="form-group">
+                    <label class="form-label" for="height_cm">User Height (in cm)</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-ruler-vertical"></i>
+                        <input class="form-input" type="number" id="height_cm" name="height_cm" placeholder="e.g. 170" min="50" max="300" required value="170">
+                    </div>
+                </div>
+
+                <!-- Gender selection -->
+                <div class="form-group">
+                    <label class="form-label">Gender (For Anatomical Templates)</label>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.25rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; flex: 1; padding: 0.8rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 12px; justify-content: center; font-weight: 500; font-size: 0.95rem; color: var(--text-main); transition: border-color 0.3s ease;">
+                            <input type="radio" name="gender" value="female" checked style="accent-color: var(--primary);">
+                            Female
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; flex: 1; padding: 0.8rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 12px; justify-content: center; font-weight: 500; font-size: 0.95rem; color: var(--text-main); transition: border-color 0.3s ease;">
+                            <input type="radio" name="gender" value="male" style="accent-color: var(--primary);">
+                            Male
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Weight input -->
+                <div class="form-group">
+                    <label class="form-label" for="weight_input">Body Weight</label>
+                    <div style="display: flex; gap: 0.5rem; width: 100%;">
+                        <div style="position: relative; flex: 2; display: flex; align-items: center;">
+                            <i class="fa-solid fa-weight-scale" style="position: absolute; left: 1rem; color: var(--text-muted); z-index: 1;"></i>
+                            <input class="form-input" type="number" id="weight_input" placeholder="e.g. 60" min="20" max="500" required value="60" style="padding-left: 2.8rem; margin: 0;">
+                        </div>
+                        <select id="weight_unit" style="flex: 1; background: rgba(0, 0, 0, 0.4); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 12px; cursor: pointer; padding: 0.8rem; font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.3s ease;">
+                            <option value="kg" selected>kg</option>
+                            <option value="lbs">lbs</option>
+                        </select>
+                        <input type="hidden" id="weight_kg" name="weight_kg" value="60">
+                    </div>
+                </div>
+
+                <!-- Image uploads -->
+                <div class="form-group">
+                    <label class="form-label">Pose Images</label>
+                    
+                    <div class="upload-grid">
+                        <!-- Front image -->
+                        <div class="upload-box" id="front-dropzone" onclick="document.getElementById('front').click()">
+                            <button type="button" class="remove-btn" onclick="event.stopPropagation(); removeFile('front')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <img id="front-preview" class="image-preview" src="#" alt="Front Preview">
+                            <div class="upload-content" id="front-content">
+                                <i class="fa-solid fa-user upload-icon"></i>
+                                <span class="upload-text">Front View</span>
+                                <span class="upload-hint">Drag & drop or click</span>
+                                <span class="upload-hint" style="color: #ef4444; font-size: 0.7rem;">(Required)</span>
+                                <button type="button" class="camera-btn" onclick="event.stopPropagation(); openCameraModal('front')"><i class="fa-solid fa-camera"></i> Live Cam</button>
+                            </div>
+                            <input class="file-input" type="file" id="front" name="front" accept="image/*" required onchange="handleFileSelect(this, 'front')">
+                        </div>
+
+                        <!-- Side image -->
+                        <div class="upload-box" id="left_side-dropzone" onclick="document.getElementById('left_side').click()">
+                            <button type="button" class="remove-btn" onclick="event.stopPropagation(); removeFile('left_side')">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <img id="left_side-preview" class="image-preview" src="#" alt="Side Preview">
+                            <div class="upload-content" id="left_side-content">
+                                <i class="fa-solid fa-user-ninja upload-icon"></i>
+                                <span class="upload-text">Side View</span>
+                                <span class="upload-hint">Drag & drop or click</span>
+                                <span class="upload-hint" style="color: var(--text-muted); font-size: 0.7rem;">(Optional)</span>
+                                <button type="button" class="camera-btn" onclick="event.stopPropagation(); openCameraModal('left_side')"><i class="fa-solid fa-camera"></i> Live Cam</button>
+                            </div>
+                            <input class="file-input" type="file" id="left_side" name="left_side" accept="image/*" onchange="handleFileSelect(this, 'left_side')">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submit-btn">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Calculate Measurements
+                </button>
+            </form>
+        </section>
+
+        <!-- RESULTS DISPLAY PANEL -->
+        <section class="glass-panel results-container">
+            <h2 class="panel-title"><i class="fa-solid fa-chart-simple"></i> Body Measurements Result</h2>
+
+            <!-- State: Error -->
+            <div id="error-state" class="state-error">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span id="error-message"></span>
+            </div>
+
+            <!-- State: Empty / Waiting -->
+            <div id="empty-state" class="state-empty">
+                <i class="fa-solid fa-wand-magic"></i>
+                <h3>No Measurements Yet</h3>
+                <p style="max-width: 320px; margin-top: 0.5rem; font-size: 0.9rem;">Fill in the height and upload a front photo to see calculated sizing outputs here.</p>
+            </div>
+
+            <!-- State: Loading -->
+            <div id="loading-state" class="state-loading">
+                <div class="spinner"></div>
+                <h3>Processing Pose Images...</h3>
+                <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.9rem; max-width: 380px;">AI is detecting posture landmarks, analyzing depth contours, and calculating real-world centimeter measurements.</p>
+            </div>
+
+            <!-- State: Success -->
+            <div id="success-state" class="state-success">
+                <div class="results-layout">
+                    <div>
+                        <div class="info-cards" id="measurements-grid">
+                            <!-- Dynamic measurement cards injected here -->
+                        </div>
+                    </div>
+                    <!-- 3D Viewport container -->
+                    <div style="display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 1.5rem;">
+                        <div class="avatar-container">
+                            <canvas id="avatar-canvas"></canvas>
+                            <!-- Drag rotation hint -->
+                            <div style="position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; color: var(--text-main); pointer-events: none; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-arrows-spin" style="color: var(--primary);"></i> Drag to rotate avatar
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clothing Size Recommendations -->
+                <div class="debug-panel" id="sizing-recommendation-panel" style="background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.08) 100%); border: 1.5px solid rgba(99,102,241,0.3); margin-top: 1.5rem; margin-bottom: 1rem; border-radius: 12px; padding: 1.25rem;">
+                    <div class="debug-title" style="color: var(--accent); margin-bottom: 0.75rem; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-tags"></i> Size Recommendation</div>
+                    <div class="debug-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; display: grid;">
+                        <div class="debug-item" style="display: flex; flex-direction: column; gap: 4px;">
+                            <span class="debug-label" style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">Recommended Upper Size (Shirt/Kurti)</span>
+                            <span class="debug-val" id="val-upper-size" style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">-</span>
+                        </div>
+                        <div class="debug-item" style="display: flex; flex-direction: column; gap: 4px;">
+                            <span class="debug-label" style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">Recommended Lower Size (Trouser/Pant)</span>
+                            <span class="debug-val" id="val-lower-size" style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">-</span>
+                        </div>
+                        <div class="debug-item" style="display: flex; flex-direction: column; gap: 4px;">
+                            <span class="debug-label" style="font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">Suggested Fit Profile</span>
+                            <span class="debug-val" id="val-fit-category" style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Debug/Scale Info -->
+                <div class="debug-panel" id="debug-info-panel">
+                    <div class="debug-title"><i class="fa-solid fa-bug"></i> Calibration Diagnostics</div>
+                    <div class="debug-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
+                        <div class="debug-item">
+                            <span class="debug-label">Scale Factor: </span>
+                            <span class="debug-val" id="val-scale-factor">-</span>
+                        </div>
+                        <div class="debug-item">
+                            <span class="debug-label">Calibrated Height: </span>
+                            <span class="debug-val" id="val-calibrated-height">-</span>
+                        </div>
+                        <div class="debug-item">
+                            <span class="debug-label">Gender / Weight: </span>
+                            <span class="debug-val" id="val-gender-weight">-</span>
+                        </div>
+                        <div class="debug-item">
+                            <span class="debug-label">Body Mass Index (BMI): </span>
+                            <span class="debug-val" id="val-bmi">-</span>
+                        </div>
+                        <!-- Hidden but present for JS compatibility -->
+                        <div class="debug-item" style="display: none;">
+                            <span class="debug-label">Focal Length: </span>
+                            <span class="debug-val" id="val-focal-length">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CAMERA CAPTURE MODAL WITH LIVE GUIDANCE -->
+        <div id="camera-modal" class="camera-modal" style="display: none;">
+            <div class="camera-modal-content">
+                <div class="camera-header">
+                    <h3 id="camera-modal-title"><i class="fa-solid fa-camera"></i> Live Pose Guidance</h3>
+                    <button type="button" class="close-camera-btn" onclick="closeCameraModal()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="camera-body">
+                    <div class="video-container">
+                        <video id="webcam" autoplay playsinline muted width="640" height="480"></video>
+                        <canvas id="camera-canvas" width="640" height="480"></canvas>
+                        <!-- Gyro bubble overlay -->
+                        <div id="gyro-overlay" class="gyro-overlay">
+                            <div id="gyro-bubble" class="gyro-bubble"></div>
+                            <div class="gyro-target"></div>
+                        </div>
+                    </div>
+                    <div class="guidance-sidebar">
+                        <div class="guidance-section">
+                            <h4><i class="fa-solid fa-mobile-screen"></i> Gyroscope Alignment</h4>
+                            <div id="gyro-status" class="status-indicator invalid">
+                                <i class="fa-solid fa-circle-xmark"></i> Perpendicular (90° ± 2°)
+                            </div>
+                            <div class="guidance-detail" id="gyro-angle-readout">Tilt: -</div>
+                        </div>
+                        
+                        <div class="guidance-section">
+                            <h4><i class="fa-solid fa-child"></i> Pose Validation (A-Pose)</h4>
+                            <div id="pose-status" class="status-indicator invalid">
+                                <i class="fa-solid fa-circle-xmark"></i> Stand in A-Pose
+                            </div>
+                            <div class="pose-checks">
+                                <div class="pose-check-item" id="check-visibility">
+                                    <i class="fa-solid fa-circle-xmark status-icon"></i> Full Body Visible
+                                </div>
+                                <div class="pose-check-item" id="check-arms">
+                                    <i class="fa-solid fa-circle-xmark status-icon"></i> Arms 30° away
+                                </div>
+                                <div class="pose-check-item" id="check-legs">
+                                    <i class="fa-solid fa-circle-xmark status-icon"></i> Legs shoulder-width
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="guidance-section capture-section" style="display: flex; flex-direction: column; justify-content: center; gap: 0.5rem;">
+                            <div id="autocapture-timer" class="autocapture-timer" style="display: none;">
+                                Capturing in <span id="timer-sec">3</span>s...
+                            </div>
+                            <button type="button" id="capture-btn" class="submit-btn" disabled onclick="capturePhoto()">
+                                <i class="fa-solid fa-camera"></i> Capture Photo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Built with MediaPipe, PyTorch (MiDaS), OpenCV, & Flask. &copy; 2026 AI Body Measurements.</p>
+    </footer>
+
+    <script>
+        // Setup Drag & Drop
+        const dropzones = ['front', 'left_side'];
+        
+        dropzones.forEach(zoneId => {
+            const dropzone = document.getElementById(`${zoneId}-dropzone`);
+            
+            // Drag enter / over
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.add('dragover');
+                }, false);
+            });
+
+            // Drag leave / drop
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.remove('dragover');
+                }, false);
+            });
+
+            // Handle dropped files
+            dropzone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length) {
+                    const fileInput = document.getElementById(zoneId);
+                    fileInput.files = files;
+                    handleFileSelect(fileInput, zoneId);
+                }
+            });
+        });
+
+        // Handle Image Selection and Preview
+        function handleFileSelect(input, key) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById(`${key}-preview`);
+                    preview.src = e.target.result;
+                    document.getElementById(`${key}-dropzone`).classList.add('preview-active');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Remove Selected File
+        function removeFile(key) {
+            const input = document.getElementById(key);
+            input.value = '';
+            document.getElementById(`${key}-preview`).src = '#';
+            document.getElementById(`${key}-dropzone`).classList.remove('preview-active');
+        }
+
+        // Format label keys to readable text
+        function formatKey(key) {
+            return key
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        // Get corresponding FontAwesome icon for measurements
+        function getIconForKey(key) {
+            const icons = {
+                // Circumferences
+                shoulder_width:           'fa-arrows-left-right',
+                neck:                     'fa-ring',
+                neck_width:               'fa-arrows-h',
+                upper_chest:              'fa-circle-half-stroke',
+                chest_circumference:      'fa-circle-dot',
+                chest_width:              'fa-left-right',
+                lower_chest:              'fa-circle',
+                waist:                    'fa-circle',
+                waist_width:              'fa-align-center',
+                hip:                      'fa-circle',
+                hip_width:                'fa-maximize',
+                thigh_circumference:      'fa-rotate',
+                thigh:                    'fa-ellipsis-h',
+                knee_circumference:       'fa-circle-half-stroke',
+                ankle_circumference:      'fa-circle-dot',
+                bicep_circumference:      'fa-dumbbell',
+                wrist_circumference:      'fa-hand',
+                armhole_circumference:    'fa-circle-notch',
+                // Lengths
+                arm_length:               'fa-hand',
+                shirt_length:             'fa-shirt',
+                body_length:              'fa-ruler-vertical',
+                tucks_point:              'fa-location-crosshairs',
+                trouser_length:           'fa-socks',
+                full_height:              'fa-person',
+            };
+            return icons[key] || 'fa-ruler';
+        }
+
+        // Human-readable labels matching tailor terminology
+        const TAILOR_LABELS = {
+            shoulder_width:        'Shoulder',
+            neck:                  'Neck Round',
+            neck_width:            'Neck Width',
+            upper_chest:           'Upper Chest',
+            chest_circumference:   'Chest',
+            chest_width:           'Chest Width',
+            lower_chest:           'Lower Chest',
+            waist:                 'Waist',
+            waist_width:           'Waist Width',
+            hip:                   'Hip',
+            hip_width:             'Hip Width',
+            thigh_circumference:   'Upper Thigh',
+            thigh:                 'Thigh Width',
+            knee_circumference:    'Ghutna (Knee)',
+            ankle_circumference:   'Bottom Round (Ankle)',
+            bicep_circumference:   'Arm Round (Bicep)',
+            wrist_circumference:   'Sleeve Bottom Round',
+            armhole_circumference: 'Arm Hole',
+            arm_length:            'Sleeve Length',
+            shirt_length:          'Kurti / Shirt Length',
+            body_length:           'Body Length',
+            tucks_point:           'Tucks Point',
+            trouser_length:        'Full Trouser Length',
+            full_height:           'Full Height',
+        };
+
+
+        // Weight Unit Conversion & Form Prep
+        function updateHiddenWeight() {
+            const weightInput = document.getElementById('weight_input');
+            const weightUnit = document.getElementById('weight_unit');
+            const weightKgHidden = document.getElementById('weight_kg');
+            if (weightInput && weightUnit && weightKgHidden) {
+                const val = parseFloat(weightInput.value) || 0;
+                if (weightUnit.value === 'lbs') {
+                    weightKgHidden.value = (val * 0.45359237).toFixed(2);
+                } else {
+                    weightKgHidden.value = val.toFixed(2);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const weightInput = document.getElementById('weight_input');
+            const weightUnit = document.getElementById('weight_unit');
+            if (weightInput && weightUnit) {
+                weightInput.addEventListener('input', updateHiddenWeight);
+                weightUnit.addEventListener('change', updateHiddenWeight);
+                updateHiddenWeight();
+            }
+        });
+
+        // --- THREE.JS INTERACTIVE 3D AVATAR ENGINE ---
+        let avatarViewer = null;
+
+        class AvatarViewer {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.container = this.canvas.parentElement;
+                
+                // 1. Scene setup
+                this.scene = new THREE.Scene();
+                this.scene.background = null; // Transparent to keep beautiful radial gradient CSS bg
+                
+                // 2. Camera setup
+                this.camera = new THREE.PerspectiveCamera(45, this.container.clientWidth / this.container.clientHeight, 0.1, 1000);
+                this.camera.position.set(0, 100, 240);
+                
+                // 3. WebGL Renderer
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: this.canvas,
+                    antialias: true,
+                    alpha: true
+                });
+                this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                
+                // 4. Orbit Controls (Interactive Orbit/Pan/Zoom)
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.maxPolarAngle = Math.PI / 2 + 0.1; // Restrict camera from dipping too far below floor
+                this.controls.minDistance = 60;
+                this.controls.maxDistance = 450;
+                this.controls.target.set(0, 75, 0); // Focus controls around pelvis/torso center
+                
+                // Stop auto-rotation when user starts dragging
+                this.controls.addEventListener('start', () => {
+                    this.autoRotateSpeed = 0;
+                });
+                
+                // 5. Grid helper (Premium sci-fi ground grid)
+                const gridHelper = new THREE.GridHelper(160, 16, 0x6366f1, 0x1e2030);
+                gridHelper.position.y = 0;
+                gridHelper.material.opacity = 0.35;
+                gridHelper.material.transparent = true;
+                this.scene.add(gridHelper);
+                
+                // 6. Professional Studio Lights Setup
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
+                this.scene.add(ambientLight);
+                
+                // Main key light
+                const keyLight = new THREE.DirectionalLight(0xffffff, 0.85);
+                keyLight.position.set(120, 180, 100);
+                this.scene.add(keyLight);
+                
+                // Fill light (teal tint for aesthetics)
+                const fillLight = new THREE.DirectionalLight(0x14b8a6, 0.4);
+                fillLight.position.set(-120, 60, 100);
+                this.scene.add(fillLight);
+                
+                // Rim Light (Indigo highlight from behind)
+                const rimLight = new THREE.DirectionalLight(0x6366f1, 1.1);
+                rimLight.position.set(0, 100, -160);
+                this.scene.add(rimLight);
+                
+                // 7. Avatar group container
+                this.avatarGroup = new THREE.Group();
+                this.scene.add(this.avatarGroup);
+                
+                // Auto-rotate setting
+                this.autoRotateSpeed = 0.003;
+                
+                // Resize listener
+                window.addEventListener('resize', () => this.onResize());
+                
+                // Start render loop
+                this.animate();
+            }
+            
+            onResize() {
+                const width = this.container.clientWidth;
+                const height = this.container.clientHeight;
+                this.camera.aspect = width / height;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(width, height);
+            }
+            
+            updateMesh(vertices, joints, measurements) {
+                // Clear existing meshes in the group
+                while(this.avatarGroup.children.length > 0){ 
+                    this.avatarGroup.remove(this.avatarGroup.children[0]); 
+                }
+                
+                if (!joints || !measurements) {
+                    this.updateMeshLegacy(vertices);
+                    return;
+                }
+                
+                // Materials
+                // Translucent physical glassmorphic mesh
+                const glassMaterial = new THREE.MeshPhysicalMaterial({
+                    color: 0x6366f1,
+                    roughness: 0.18,
+                    metalness: 0.05,
+                    transmission: 0.65,
+                    thickness: 1.8,
+                    ior: 1.5,
+                    side: THREE.DoubleSide,
+                    flatShading: false,
+                    depthWrite: true,
+                    transparent: true,
+                    opacity: 0.88,
+                    clearcoat: 0.3,
+                    clearcoatRoughness: 0.2
+                });
+                
+                // Cyberpunk overlay wireframe
+                const wireMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xa5b4fc,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.14
+                });
+                
+                const addPart = (geom) => {
+                    const mesh = new THREE.Mesh(geom, glassMaterial);
+                    const wire = new THREE.Mesh(geom, wireMaterial);
+                    this.avatarGroup.add(mesh);
+                    this.avatarGroup.add(wire);
+                };
+                
+                // Helper to render segment cylinder between two points
+                const addCylinderPart = (p1, p2, r1, r2) => {
+                    const v1 = new THREE.Vector3(p1[0], p1[1], p1[2]);
+                    const v2 = new THREE.Vector3(p2[0], p2[1], p2[2]);
+                    const dir = new THREE.Vector3().subVectors(v2, v1);
+                    const len = dir.length();
+                    const mid = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
+                    
+                    const geom = new THREE.CylinderGeometry(r2, r1, len, 16);
+                    const mesh = new THREE.Mesh(geom, glassMaterial);
+                    const wire = new THREE.Mesh(geom, wireMaterial);
+                    
+                    mesh.position.copy(mid);
+                    wire.position.copy(mid);
+                    
+                    const alignAxis = new THREE.Vector3(0, 1, 0);
+                    const rot = new THREE.Quaternion().setFromUnitVectors(alignAxis, dir.clone().normalize());
+                    mesh.quaternion.copy(rot);
+                    wire.quaternion.copy(rot);
+                    
+                    this.avatarGroup.add(mesh);
+                    this.avatarGroup.add(wire);
+                };
+                
+                // Helper to render joint sphere at point
+                const addJointSphere = (p, r) => {
+                    const geom = new THREE.SphereGeometry(r, 16, 16);
+                    const mesh = new THREE.Mesh(geom, glassMaterial);
+                    const wire = new THREE.Mesh(geom, wireMaterial);
+                    mesh.position.set(p[0], p[1], p[2]);
+                    wire.position.set(p[0], p[1], p[2]);
+                    this.avatarGroup.add(mesh);
+                    this.avatarGroup.add(wire);
+                };
+                
+                // 1. Torso: Slices 40 (hips) to 72 (upper-back, below shoulder-neck junction).
+                // Ending at slice 72 prevents the wide torso mesh from overlapping / bulging
+                // around the narrow neck cylinder above the shoulder joint level.
+                const numVerticesPerSlice = 32;
+                const startSlice = 40;
+                const endSlice = 72;
+                const numSlices = endSlice - startSlice + 1;
+                
+                const slicedVertices = [];
+                for (let j = startSlice; j <= endSlice; j++) {
+                    for (let i = 0; i < numVerticesPerSlice; i++) {
+                        const baseIdx = (j * numVerticesPerSlice + i) * 3;
+                        slicedVertices.push(
+                            vertices[baseIdx],
+                            vertices[baseIdx + 1],
+                            vertices[baseIdx + 2]
+                        );
+                    }
+                }
+                
+                const indices = [];
+                for (let j = 0; j < numSlices - 1; j++) {
+                    for (let i = 0; i < numVerticesPerSlice; i++) {
+                        const nextI = (i + 1) % numVerticesPerSlice;
+                        const p00 = j * numVerticesPerSlice + i;
+                        const p10 = (j + 1) * numVerticesPerSlice + i;
+                        const p01 = j * numVerticesPerSlice + nextI;
+                        const p11 = (j + 1) * numVerticesPerSlice + nextI;
+                        
+                        indices.push(p00, p10, p01);
+                        indices.push(p10, p11, p01);
+                    }
+                }
+                
+                const torsoGeom = new THREE.BufferGeometry();
+                torsoGeom.setAttribute('position', new THREE.Float32BufferAttribute(slicedVertices, 3));
+                torsoGeom.setIndex(indices);
+                torsoGeom.computeVertexNormals();
+                addPart(torsoGeom);
+
+                // Compute the centroid of the TOP ring of the torso mesh (slice endSlice).
+                // This is used as the bottom anchor of the neck cylinder so it connects
+                // seamlessly to the torso top without any gap or overlap.
+                let torsoTopX = 0, torsoTopY = 0, torsoTopZ = 0;
+                const topRingBase = (endSlice * numVerticesPerSlice) * 3;
+                for (let vi = 0; vi < numVerticesPerSlice; vi++) {
+                    const bi = (endSlice * numVerticesPerSlice + vi) * 3;
+                    torsoTopX += vertices[bi];
+                    torsoTopY += vertices[bi + 1];
+                    torsoTopZ += vertices[bi + 2];
+                }
+                torsoTopX /= numVerticesPerSlice;
+                torsoTopY /= numVerticesPerSlice;
+                torsoTopZ /= numVerticesPerSlice;
+                
+                // 2. Head (centered between ears, elevated slightly)
+                const pNose = new THREE.Vector3(joints.nose[0], joints.nose[1], joints.nose[2]);
+                const pLEar = new THREE.Vector3(joints.left_ear[0], joints.left_ear[1], joints.left_ear[2]);
+                const pREar = new THREE.Vector3(joints.right_ear[0], joints.right_ear[1], joints.right_ear[2]);
+                const headCenter = new THREE.Vector3().addVectors(pLEar, pREar).multiplyScalar(0.5);
+                headCenter.y += 3.5;
+                const earDist = pLEar.distanceTo(pREar);
+                const headRadius = Math.max(9.0, earDist * 0.7);
+                const headGeom = new THREE.SphereGeometry(headRadius, 24, 24);
+                
+                const headMesh = new THREE.Mesh(headGeom, glassMaterial);
+                const headWire = new THREE.Mesh(headGeom, wireMaterial);
+                headMesh.position.copy(headCenter);
+                headWire.position.copy(headCenter);
+                this.avatarGroup.add(headMesh);
+                this.avatarGroup.add(headWire);
+                
+                // 3. Neck: from the torso-top centroid up to just below the head sphere.
+                // neckBottom is the computed centroid of the top ring of the torso mesh,
+                // so the cylinder connects flush with no gap. The torso mesh ends at slice
+                // 72 (well below the shoulder joint), so the neck cylinder covers the
+                // shoulder-to-head region with no mesh overlap / bulge.
+                const pLShoulder = new THREE.Vector3(joints.left_shoulder[0], joints.left_shoulder[1], joints.left_shoulder[2]);
+                const pRShoulder = new THREE.Vector3(joints.right_shoulder[0], joints.right_shoulder[1], joints.right_shoulder[2]);
+                const shoulderMid = new THREE.Vector3().addVectors(pLShoulder, pRShoulder).multiplyScalar(0.5);
+
+                // neckBottom: use the torso-top centroid (flush join) but clamp Y to be at
+                // least as high as the shoulder midpoint so the cylinder never goes backwards.
+                const neckBottomY = Math.max(torsoTopY, shoulderMid.y - 2);
+                const neckBottom = [torsoTopX, neckBottomY, torsoTopZ];
+                const neckTop = [headCenter.x, headCenter.y - headRadius * 0.8, headCenter.z];
+
+                // neckRadius: use measurement neck circumference; add a small taper at the
+                // bottom (shoulder base) so the cylinder blends into the torso top ring.
+                const neckRadius = (measurements.neck || 35) / (2 * Math.PI);
+                // Bottom of neck cylinder is slightly wider (shoulder-cap taper): 1.5x neck radius
+                const neckBaseRadius = neckRadius * 1.5;
+                addCylinderPart(neckBottom, neckTop, neckBaseRadius, neckRadius);
+                
+                // 4. Arms (Upper & Lower segments)
+                const shWidth = measurements.shoulder_width || 38;
+                const upperArmRadius = shWidth * 0.11;
+                const forearmRadius = shWidth * 0.085;
+                
+                // Left Arm
+                addCylinderPart(joints.left_shoulder, joints.left_elbow, upperArmRadius, upperArmRadius * 0.9);
+                addCylinderPart(joints.left_elbow, joints.left_wrist, upperArmRadius * 0.9, forearmRadius);
+                addJointSphere(joints.left_shoulder, upperArmRadius * 1.05, glassMaterial);
+                addJointSphere(joints.left_elbow, upperArmRadius * 0.95, glassMaterial);
+                addJointSphere(joints.left_wrist, forearmRadius * 1.1, glassMaterial);
+                
+                // Right Arm
+                addCylinderPart(joints.right_shoulder, joints.right_elbow, upperArmRadius, upperArmRadius * 0.9);
+                addCylinderPart(joints.right_elbow, joints.right_wrist, upperArmRadius * 0.9, forearmRadius);
+                addJointSphere(joints.right_shoulder, upperArmRadius * 1.05, glassMaterial);
+                addJointSphere(joints.right_elbow, upperArmRadius * 0.95, glassMaterial);
+                addJointSphere(joints.right_wrist, forearmRadius * 1.1, glassMaterial);
+                
+                // 5. Legs (Thigh & Calf segments)
+                const thighRadius = (measurements.thigh_circumference || 55) / (2 * Math.PI);
+                const calfRadius = thighRadius * 0.70;
+                const ankleRadius = thighRadius * 0.45;
+                
+                // Left Leg
+                addCylinderPart(joints.left_hip, joints.left_knee, thighRadius, calfRadius);
+                addCylinderPart(joints.left_knee, joints.left_ankle, calfRadius, ankleRadius);
+                addJointSphere(joints.left_hip, thighRadius * 1.02, glassMaterial);
+                addJointSphere(joints.left_knee, calfRadius * 1.05, glassMaterial);
+                addJointSphere(joints.left_ankle, ankleRadius * 1.1, glassMaterial);
+                
+                // Right Leg
+                addCylinderPart(joints.right_hip, joints.right_knee, thighRadius, calfRadius);
+                addCylinderPart(joints.right_knee, joints.right_ankle, calfRadius, ankleRadius);
+                addJointSphere(joints.right_hip, thighRadius * 1.02, glassMaterial);
+                addJointSphere(joints.right_knee, calfRadius * 1.05, glassMaterial);
+                addJointSphere(joints.right_ankle, ankleRadius * 1.1, glassMaterial);
+                
+                // Center camera target on torso center
+                torsoGeom.computeBoundingBox();
+                const center = new THREE.Vector3();
+                torsoGeom.boundingBox.getCenter(center);
+                this.controls.target.copy(center);
+                this.camera.position.set(0, center.y, 220);
+                
+                // Reset auto-rotate on mesh load
+                this.autoRotateSpeed = 0.003;
+            }
+            
+            updateMeshLegacy(vertices) {
+                const numSlices = 100;
+                const numVerticesPerSlice = 32;
+                const indices = [];
+                for (let j = 0; j < numSlices - 1; j++) {
+                    for (let i = 0; i < numVerticesPerSlice; i++) {
+                        const nextI = (i + 1) % numVerticesPerSlice;
+                        const p00 = j * numVerticesPerSlice + i;
+                        const p10 = (j + 1) * numVerticesPerSlice + i;
+                        const p01 = j * numVerticesPerSlice + nextI;
+                        const p11 = (j + 1) * numVerticesPerSlice + nextI;
+                        indices.push(p00, p10, p01);
+                        indices.push(p10, p11, p01);
+                    }
+                }
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+                geometry.setIndex(indices);
+                geometry.computeVertexNormals();
+                
+                const glassMaterial = new THREE.MeshPhysicalMaterial({
+                    color: 0x6366f1,
+                    roughness: 0.18,
+                    metalness: 0.05,
+                    transmission: 0.65,
+                    thickness: 1.8,
+                    ior: 1.5,
+                    side: THREE.DoubleSide,
+                    flatShading: false,
+                    depthWrite: true,
+                    transparent: true,
+                    opacity: 0.88,
+                    clearcoat: 0.3,
+                    clearcoatRoughness: 0.2
+                });
+                const wireMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xa5b4fc,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.14
+                });
+                
+                const mesh = new THREE.Mesh(geometry, glassMaterial);
+                const wire = new THREE.Mesh(geometry, wireMaterial);
+                this.avatarGroup.add(mesh);
+                this.avatarGroup.add(wire);
+                
+                geometry.computeBoundingBox();
+                const center = new THREE.Vector3();
+                geometry.boundingBox.getCenter(center);
+                this.controls.target.copy(center);
+                this.camera.position.set(0, center.y, 220);
+                this.autoRotateSpeed = 0.003;
+            }
+            
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                if (this.avatarGroup && this.autoRotateSpeed > 0) {
+                    this.avatarGroup.rotation.y += this.autoRotateSpeed;
+                }
+                
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // Handle form submit
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            // Ensure hidden weight parameter matches unit state
+            updateHiddenWeight();
+            
+            const form = document.getElementById('measurement-form');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            const emptyState = document.getElementById('empty-state');
+            const loadingState = document.getElementById('loading-state');
+            const successState = document.getElementById('success-state');
+            const errorState = document.getElementById('error-state');
+            
+            // Toggle view states
+            emptyState.style.display = 'none';
+            successState.style.display = 'none';
+            errorState.style.display = 'none';
+            loadingState.style.display = 'flex';
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fitting 3D Mesh...';
+
+            const formData = new FormData(form);
+
+            try {
+                // Post to /upload_images
+                const response = await fetch('/upload_images', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Server error. Failed to process images.');
+                }
+
+                // Render success results
+                renderResults(result);
+                
+                loadingState.style.display = 'none';
+                successState.style.display = 'block';
+
+                // Initialize or resize Three.js canvas after container layout goes visible
+                setTimeout(() => {
+                    if (!avatarViewer) {
+                        avatarViewer = new AvatarViewer('avatar-canvas');
+                    } else {
+                        avatarViewer.onResize();
+                    }
+                    if (result.mesh_vertices) {
+                        avatarViewer.updateMesh(result.mesh_vertices, result.skeleton_joints, result.measurements);
+                    }
+                }, 50);
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('error-message').textContent = err.message;
+                errorState.style.display = 'block';
+                loadingState.style.display = 'none';
+                emptyState.style.display = 'flex';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Calculate Measurements';
+            }
+        }
+
+        function getBmiCategory(bmi) {
+            if (bmi < 18.5) return "Underweight";
+            if (bmi < 25.0) return "Normal";
+            if (bmi < 30.0) return "Overweight";
+            return "Obese";
+        }
+
+        // Render response data
+        function renderResults(data) {
+            const grid = document.getElementById('measurements-grid');
+            grid.innerHTML = '';
+
+            const measurements = data.measurements || {};
+            const debug = data.debug_info || {};
+
+            // ── Section definitions ──────────────────────────────────────────
+            const upperBodyKeys = [
+                'full_height', 'neck', 'neck_width', 'body_length', 'tucks_point',
+                'shoulder_width', 'upper_chest', 'chest_circumference', 'chest_width',
+                'lower_chest', 'hip', 'hip_width', 'armhole_circumference',
+                'bicep_circumference', 'arm_length', 'wrist_circumference',
+                'shirt_length',
+            ];
+            const lowerBodyKeys = [
+                'trouser_length', 'waist', 'waist_width',
+                'hip', 'thigh_circumference', 'thigh',
+                'knee_circumference', 'ankle_circumference',
+            ];
+
+            function makeSection(title, icon, keys) {
+                // Header row
+                const header = document.createElement('div');
+                header.style.cssText = `
+                    grid-column: 1 / -1;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin: 18px 0 6px;
+                    padding-bottom: 8px;
+                    border-bottom: 1.5px solid rgba(99,102,241,0.25);
+                `;
+                header.innerHTML = `
+                    <i class="fa-solid ${icon}" style="color: var(--accent); font-size: 1.1rem;"></i>
+                    <span style="font-size: 1.05rem; font-weight: 700; letter-spacing: 0.04em; color: var(--text-primary);">${title}</span>
+                `;
+                grid.appendChild(header);
+
+                keys.forEach(key => {
+                    if (!(key in measurements)) return;
+                    const val = measurements[key];
+                    const label = TAILOR_LABELS[key] || key.replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+                    const iconClass = getIconForKey(key);
+                    const isCirc = key.includes('circumference') || ['waist','neck','hip','upper_chest','lower_chest'].includes(key);
+
+                    const card = document.createElement('div');
+                    card.className = 'info-card' + (isCirc ? ' accent-card' : '');
+
+                    const valInches = (val / 2.54).toFixed(1);
+                    card.innerHTML = `
+                        <div class="card-icon"><i class="fa-solid ${iconClass}"></i></div>
+                        <div class="card-details">
+                            <span class="card-label">${label}</span>
+                            <span class="card-value">${val}<span class="card-unit">cm</span> <span style="font-size:0.95rem;font-weight:400;color:var(--text-muted);margin:0 4px;">/</span> ${valInches}<span class="card-unit">in</span></span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+
+            makeSection('Upper Body', 'fa-person-dress', upperBodyKeys);
+            makeSection('Lower Body', 'fa-socks',         lowerBodyKeys);
+
+            // Update clothing size recommendations
+            const sizing = data.clothing_sizes || {};
+            document.getElementById('val-upper-size').textContent = sizing.upper_size || '-';
+            document.getElementById('val-lower-size').textContent = sizing.lower_size || '-';
+            document.getElementById('val-fit-category').textContent = sizing.fit_category || '-';
+
+            // Update debug panel
+            document.getElementById('val-scale-factor').textContent = debug.scale_factor ? debug.scale_factor.toFixed(5) : '-';
+            document.getElementById('val-calibrated-height').textContent = debug.user_height_cm ? `${debug.user_height_cm} cm` : '-';
+            
+            const genderDisplay = debug.gender ? debug.gender.toUpperCase() : '-';
+            const weightDisplay = debug.weight_kg ? `${debug.weight_kg.toFixed(1)} kg (${(debug.weight_kg * 2.20462).toFixed(1)} lbs)` : '-';
+            document.getElementById('val-gender-weight').textContent = `${genderDisplay} / ${weightDisplay}`;
+            document.getElementById('val-bmi').textContent = debug.bmi ? `${debug.bmi.toFixed(1)} (${getBmiCategory(debug.bmi)})` : '-';
+            document.getElementById('val-focal-length').textContent = '-';
+        }
+
+        // --- CAMERA CAPTURE AND LIVE GUIDANCE CORE LOGIC ---
+        let activeTargetSlot = null; // 'front' or 'left_side'
+        let localStream = null;
+        let mpPoseInstance = null;
+        let isCameraActive = false;
+
+        let currentBeta = 90; // Default flat-vertical for mock/PC bypass
+        let currentGamma = 0;
+        let hasGyro = false;
+
+        let captureTimer = null;
+        let isCaptureTimerRunning = false;
+        let isGyroAlignedGlobal = false;
+        let isPoseValidGlobal = false;
+
+        // DeviceOrientation Listener with orientation permission check
+        window.addEventListener('deviceorientation', (e) => {
+            if (e.beta !== null) {
+                hasGyro = true;
+                currentBeta = e.beta;
+                currentGamma = e.gamma;
+            }
+        });
+
+        // Initialize MediaPipe Pose Model
+        function initMediaPipePose() {
+            if (mpPoseInstance) return;
+            
+            mpPoseInstance = new Pose({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+            });
+            
+            mpPoseInstance.setOptions({
+                modelComplexity: 1,
+                smoothLandmarks: true,
+                minDetectionConfidence: 0.65,
+                minTrackingConfidence: 0.65
+            });
+            
+            mpPoseInstance.onResults(onPoseResults);
+        }
+
+        // Open Camera Modal
+        async function openCameraModal(slot) {
+            activeTargetSlot = slot;
+            const modal = document.getElementById('camera-modal');
+            const title = document.getElementById('camera-modal-title');
+            
+            title.innerHTML = `<i class="fa-solid fa-camera"></i> Live Pose Guidance - ${slot === 'front' ? 'Front' : 'Side'} View`;
+            modal.style.display = 'flex';
+            
+            // Request orientation permissions (required for iOS 13+)
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permissionState = await DeviceOrientationEvent.requestPermission();
+                    if (permissionState === 'granted') {
+                        window.addEventListener('deviceorientation', (e) => {
+                            if (e.beta !== null) {
+                                hasGyro = true;
+                                currentBeta = e.beta;
+                                currentGamma = e.gamma;
+                            }
+                        });
+                    }
+                } catch (err) {
+                    console.error("Device orientation permission denied:", err);
+                }
+            }
+
+            initMediaPipePose();
+            await startCamera();
+        }
+
+        // Close Camera Modal
+        function closeCameraModal() {
+            stopAutoCaptureCountdown();
+            isCameraActive = false;
+            
+            document.getElementById('camera-modal').style.display = 'none';
+            
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            
+            const video = document.getElementById('webcam');
+            video.srcObject = null;
+            
+            const canvas = document.getElementById('camera-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Start Camera Feed
+        async function startCamera() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    },
+                    audio: false
+                });
+                
+                const video = document.getElementById('webcam');
+                video.srcObject = localStream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    isCameraActive = true;
+                    requestAnimationFrame(poseLoop);
+                };
+            } catch (err) {
+                alert("Unable to open camera: " + err.message);
+                closeCameraModal();
+            }
+        }
+
+        // Continuous pose detection loop
+        async function poseLoop() {
+            if (!isCameraActive) return;
+            const video = document.getElementById('webcam');
+            if (video.readyState === video.HAVE_ENOUGH_DATA && mpPoseInstance) {
+                try {
+                    await mpPoseInstance.send({ image: video });
+                } catch (e) {
+                    console.error("MediaPipe Pose Error:", e);
+                }
+            }
+            requestAnimationFrame(poseLoop);
+        }
+
+        // Handle Pose and Gyro results
+        function onPoseResults(results) {
+            const canvas = document.getElementById('camera-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const landmarks = results.poseLandmarks;
+            if (!landmarks) {
+                updatePoseStatus(false, { visible: false, arms: false, legs: false });
+                return;
+            }
+            
+            // Visibility Check (Key landmarks must be highly visible)
+            const requiredPoints = [11, 12, 13, 14, 23, 24, 25, 26, 27, 28];
+            const isVisible = requiredPoints.every(idx => landmarks[idx] && landmarks[idx].visibility > 0.65);
+            
+            let isPoseValid = false;
+            let armsValid = false;
+            let legsValid = false;
+            let leftAngle = 0;
+            let rightAngle = 0;
+            let legRatio = 0;
+            
+            if (isVisible) {
+                const left_shoulder = landmarks[11];
+                const right_shoulder = landmarks[12];
+                const left_elbow = landmarks[13];
+                const right_elbow = landmarks[14];
+                const left_hip = landmarks[23];
+                const right_hip = landmarks[24];
+                const left_ankle = landmarks[27];
+                const right_ankle = landmarks[28];
+                
+                // Calculate arm angle relative to side-torso
+                leftAngle = getAngle(left_hip, left_shoulder, left_elbow);
+                rightAngle = getAngle(right_hip, right_shoulder, right_elbow);
+                
+                // Validate arms are held 30° away from body (e.g. 20° to 45° range)
+                armsValid = (leftAngle >= 20 && leftAngle <= 45) && (rightAngle >= 20 && rightAngle <= 45);
+                
+                // Validate legs are shoulder-width apart
+                const shoulderWidth = Math.abs(left_shoulder.x - right_shoulder.x);
+                const ankleWidth = Math.abs(left_ankle.x - right_ankle.x);
+                legRatio = ankleWidth / shoulderWidth;
+                legsValid = (legRatio >= 0.8 && legRatio <= 1.6);
+                
+                isPoseValid = armsValid && legsValid;
+            }
+            
+            updatePoseStatus(isVisible, { 
+                visible: isVisible, 
+                arms: armsValid, 
+                legs: legsValid, 
+                leftAngle, 
+                rightAngle, 
+                legRatio 
+            });
+            
+            drawSkeleton(ctx, landmarks, isVisible && isPoseValid);
+        }
+
+        // Angle Calculation Utility
+        function getAngle(p1, p2, p3) {
+            const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
+            const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+            const dot = v1.x * v2.x + v1.y * v2.y;
+            const len1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+            const len2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+            if (len1 === 0 || len2 === 0) return 0;
+            const cosAngle = dot / (len1 * len2);
+            return Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
+        }
+
+        // Draw skeletons with visual green/red state mapping
+        function drawSkeleton(ctx, landmarks, isValid) {
+            const color = isValid ? '#14b8a6' : '#ef4444';
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            
+            const connections = [
+                [11, 12], [11, 13], [13, 15], [12, 14], [14, 16],
+                [11, 23], [12, 24], [23, 24], [23, 25], [24, 26],
+                [25, 27], [26, 28]
+            ];
+            
+            connections.forEach(([i1, i2]) => {
+                const pt1 = landmarks[i1];
+                const pt2 = landmarks[i2];
+                if (pt1 && pt2 && pt1.visibility > 0.5 && pt2.visibility > 0.5) {
+                    ctx.beginPath();
+                    ctx.moveTo(pt1.x * 640, pt1.y * 480);
+                    ctx.lineTo(pt2.x * 640, pt2.y * 480);
+                    ctx.stroke();
+                }
+            });
+            
+            const joints = [11, 12, 13, 14, 23, 24, 25, 26, 27, 28];
+            joints.forEach(idx => {
+                const pt = landmarks[idx];
+                if (pt && pt.visibility > 0.5) {
+                    ctx.beginPath();
+                    ctx.arc(pt.x * 640, pt.y * 480, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            });
+        }
+
+        // Update visual gyro spirit-level and pose check state cards
+        function updatePoseStatus(isVisible, data) {
+            const visibilityItem = document.getElementById('check-visibility');
+            const armsItem = document.getElementById('check-arms');
+            const legsItem = document.getElementById('check-legs');
+            const poseStatus = document.getElementById('pose-status');
+            
+            if (data.visible) {
+                visibilityItem.className = 'pose-check-item valid';
+                visibilityItem.innerHTML = '<i class="fa-solid fa-circle-check status-icon"></i> Full Body Visible';
+            } else {
+                visibilityItem.className = 'pose-check-item invalid';
+                visibilityItem.innerHTML = '<i class="fa-solid fa-circle-xmark status-icon"></i> Full Body Visible';
+            }
+            
+            if (data.arms) {
+                armsItem.className = 'pose-check-item valid';
+                armsItem.innerHTML = `<i class="fa-solid fa-circle-check status-icon"></i> Arms 30° (L: ${data.leftAngle.toFixed(0)}°, R: ${data.rightAngle.toFixed(0)}°)`;
+            } else {
+                const l = data.leftAngle ? `${data.leftAngle.toFixed(0)}°` : '-';
+                const r = data.rightAngle ? `${data.rightAngle.toFixed(0)}°` : '-';
+                armsItem.className = 'pose-check-item invalid';
+                armsItem.innerHTML = `<i class="fa-solid fa-circle-xmark status-icon"></i> Arms 30° (L: ${l}, R: ${r})`;
+            }
+            
+            if (data.legs) {
+                legsItem.className = 'pose-check-item valid';
+                legsItem.innerHTML = `<i class="fa-solid fa-circle-check status-icon"></i> Legs spread (Ratio: ${data.legRatio.toFixed(2)})`;
+            } else {
+                const ratio = data.legRatio ? data.legRatio.toFixed(2) : '-';
+                legsItem.className = 'pose-check-item invalid';
+                legsItem.innerHTML = `<i class="fa-solid fa-circle-xmark status-icon"></i> Legs spread (Ratio: ${ratio})`;
+            }
+            
+            isPoseValidGlobal = data.visible && data.arms && data.legs;
+            if (isPoseValidGlobal) {
+                poseStatus.className = 'status-indicator valid';
+                poseStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Posture: Valid A-Pose';
+            } else {
+                poseStatus.className = 'status-indicator invalid';
+                poseStatus.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Posture: Adjust Position';
+            }
+            
+            // Check orientation
+            isGyroAlignedGlobal = updateGyroOverlay();
+            
+            const captureBtn = document.getElementById('capture-btn');
+            const allValid = isPoseValidGlobal && isGyroAlignedGlobal;
+            
+            if (allValid) {
+                captureBtn.disabled = false;
+                startAutoCaptureCountdown();
+            } else {
+                captureBtn.disabled = true;
+                stopAutoCaptureCountdown();
+            }
+        }
+
+        // Gyrospirit bubble layout calculator
+        function updateGyroOverlay() {
+            const bubble = document.getElementById('gyro-bubble');
+            const readout = document.getElementById('gyro-angle-readout');
+            const gyroStatus = document.getElementById('gyro-status');
+            
+            if (!hasGyro) {
+                bubble.className = 'gyro-bubble aligned';
+                bubble.style.transform = 'translate(0px, 0px)';
+                gyroStatus.className = 'status-indicator valid';
+                gyroStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Gyro Bypassed (PC)';
+                readout.textContent = "PC Webcam Mode";
+                return true;
+            }
+            
+            const targetBeta = 90;
+            const betaDiff = currentBeta - targetBeta;
+            const gammaVal = currentGamma;
+            
+            const maxOffset = 30; // limit offset in pixels
+            const offsetX = Math.max(-maxOffset, Math.min(maxOffset, gammaVal * 2.5));
+            const offsetY = Math.max(-maxOffset, Math.min(maxOffset, betaDiff * 2.5));
+            
+            bubble.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+            
+            const isBetaValid = Math.abs(betaDiff) <= 2;
+            const isGammaValid = Math.abs(gammaVal) <= 5;
+            const isAligned = isBetaValid && isGammaValid;
+            
+            readout.textContent = `Tilt (Beta): ${currentBeta.toFixed(1)}° | Roll: ${currentGamma.toFixed(1)}°`;
+            
+            if (isAligned) {
+                bubble.classList.add('aligned');
+                gyroStatus.className = 'status-indicator valid';
+                gyroStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Perpendicular (Aligned)';
+            } else {
+                bubble.classList.remove('aligned');
+                gyroStatus.className = 'status-indicator invalid';
+                gyroStatus.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Align Phone (Tilt: ${Math.abs(betaDiff).toFixed(1)}° off)`;
+            }
+            
+            return isAligned;
+        }
+
+        // Auto capture countdown trigger
+        function startAutoCaptureCountdown() {
+            if (isCaptureTimerRunning) return;
+            isCaptureTimerRunning = true;
+            countdownSec = 3;
+            
+            const timerDiv = document.getElementById('autocapture-timer');
+            const timerSec = document.getElementById('timer-sec');
+            timerDiv.style.display = 'block';
+            timerSec.textContent = countdownSec;
+            
+            captureTimer = setInterval(() => {
+                countdownSec--;
+                timerSec.textContent = countdownSec;
+                
+                if (countdownSec <= 0) {
+                    clearInterval(captureTimer);
+                    captureTimer = null;
+                    isCaptureTimerRunning = false;
+                    timerDiv.style.display = 'none';
+                    capturePhoto();
+                }
+            }, 1000);
+        }
+
+        // Cancel capture countdown
+        function stopAutoCaptureCountdown() {
+            if (!isCaptureTimerRunning) return;
+            clearInterval(captureTimer);
+            captureTimer = null;
+            isCaptureTimerRunning = false;
+            document.getElementById('autocapture-timer').style.display = 'none';
+        }
+
+        // Capture canvas and feed to form
+        function capturePhoto() {
+            stopAutoCaptureCountdown();
+            isCameraActive = false;
+            
+            const video = document.getElementById('webcam');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            
+            const ctx = canvas.getContext('2d');
+            // Un-mirror the captured image
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob((blob) => {
+                const file = new File([blob], `${activeTargetSlot}_capture.png`, { type: 'image/png' });
+                
+                const fileInput = document.getElementById(activeTargetSlot);
+                const container = new DataTransfer();
+                container.items.add(file);
+                fileInput.files = container.files;
+                
+                const preview = document.getElementById(`${activeTargetSlot}-preview`);
+                preview.src = URL.createObjectURL(file);
+                document.getElementById(`${activeTargetSlot}-dropzone`).classList.add('preview-active');
+                
+                closeCameraModal();
+            }, 'image/png');
+        }
+    </script>
+</body>
+</html>
