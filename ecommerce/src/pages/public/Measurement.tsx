@@ -339,19 +339,6 @@ const INITIAL_FORM_DATA: MeasurementFormData = {
   sideImage: null,
 };
 
-const maleBodyTypeOptions: Array<{ label: string; value: MeasurementBodyType }> = [
-  { label: "Slim", value: "slim" },
-  { label: "Average", value: "avg" },
-  { label: "Athletic", value: "athletic" },
-  { label: "Heavy", value: "heavy" },
-];
-
-const femaleBodyTypeOptions: Array<{ label: string; value: MeasurementBodyType }> = [
-  { label: "Slim", value: "slim" },
-  { label: "Average", value: "avg" },
-  { label: "Curvy", value: "curvy" },
-  { label: "Heavy", value: "heavy" },
-];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -537,8 +524,6 @@ const Measurement = () => {
 
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
-  const bodyTypeOptions =
-    formData.gender === "female" ? femaleBodyTypeOptions : maleBodyTypeOptions;
   const heightInCm = getHeightInCm(formData.height, formData.heightUnit);
 
   const updateField = <K extends keyof MeasurementFormData>(

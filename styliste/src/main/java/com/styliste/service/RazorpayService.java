@@ -54,10 +54,12 @@ public class RazorpayService {
     private InvoiceService invoiceService;
     @Value(value="${razorpay.key.secret}")
     private String razorpaySecret;
+    @Value(value="${razorpay.webhook.secret}")
+    private String webhookSecret;
 
     public String createRazorpayOrder(com.styliste.entity.Order order) throws RazorpayException {
         JSONObject options = new JSONObject();
-        options.put("amount", order.getTotalAmount().multiply(new BigDecimal(100)));
+        options.put("amount", order.getTotalAmount().multiply(new BigDecimal(100)).longValue());
         options.put("currency", "INR");
         options.put("receipt", ("order_rcpt_" + order.getId()));
         Order razorpayOrder = this.razorpayClient.orders.create(options);
@@ -89,7 +91,7 @@ public class RazorpayService {
     }
 
     public void handleWebhook(String payload, String signature) {
-        String expectedSignature = HmacUtils.hmacSha256Hex((String)this.razorpaySecret, (String)payload);
+        String expectedSignature = HmacUtils.hmacSha256Hex((String)this.webhookSecret, (String)payload);
         if (!expectedSignature.equals(signature)) {
             throw new BadRequestException("Invalid webhook signature");
         }
