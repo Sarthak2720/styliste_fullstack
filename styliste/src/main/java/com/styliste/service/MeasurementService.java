@@ -80,8 +80,12 @@ public class MeasurementService {
             throw new BadRequestException("Maximum of 50 saved measurements reached. Please delete older ones.");
         }
         BigDecimal heightCm = this.convertHeightToCm(request.getHeight(), request.getHeightUnit());
+        if (heightCm.compareTo(BigDecimal.valueOf(50.0)) < 0) {
+            throw new BadRequestException("The height value is too small. Please ensure you have provided the height in centimeters rather than another format like feet or meters.");
+        }
         BigDecimal weightKg = this.convertWeightToKg(request.getWeight(), request.getWeightUnit());
         Map measurements = request.getMeasurements();
+        log.info("Saving measurement payload for user {}: gender={}, age={}, heightCm={}, weightKg={}, measurements={}", userId, request.getGender(), request.getAge(), heightCm, weightKg, measurements);
         String recommendedSize = null;
         BigDecimal bmi = null;
         String bmiCategory = null;

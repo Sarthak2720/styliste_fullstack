@@ -36,7 +36,6 @@ import com.styliste.security.CustomUserDetailsService;
 import com.styliste.security.JwtAuthenticationEntryPoint;
 import com.styliste.security.JwtAuthenticationFilter;
 import jakarta.servlet.DispatcherType;
-import jakarta.servlet.Filter;
 import java.util.Arrays;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -94,8 +93,62 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable()).exceptionHandling(exception -> exception.authenticationEntryPoint((AuthenticationEntryPoint)this.jwtAuthenticationEntryPoint)).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).authorizeHttpRequests(authz -> ((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)((AuthorizeHttpRequestsConfigurer.AuthorizedUrl)authz.dispatcherTypeMatchers(new DispatcherType[]{DispatcherType.FORWARD})).permitAll().requestMatchers(new String[]{"/", "/index.html", "/*.js", "/*.css", "/*.json", "/*.png", "/favicon.ico", "/assets/**", "/static/**", "/uploads/**"})).permitAll().requestMatchers(new String[]{"/privacy-policy", "/terms-of-service", "/refund-policy", "/sizeGuide", "/shipping", "/returns", "/sustainability"})).permitAll().requestMatchers(new String[]{"/admin/**", "/user/**", "/shop/**", "/login", "/signup", "/appointment/**", "/products/**", "/about/**", "/services", "/contact/**", "/testimonials/**"})).permitAll().requestMatchers(new String[]{"/api/auth/**"})).permitAll().requestMatchers(HttpMethod.GET, new String[]{"/api/products/**", "/api/categories/**", "/api/appointments/types", "/api/appointments/available-slots"})).permitAll().requestMatchers(HttpMethod.POST, new String[]{"/api/products/search"})).permitAll().requestMatchers(new String[]{"/api/appointments/guest"})).permitAll().requestMatchers(HttpMethod.GET, new String[]{"/api/reviews/**"})).permitAll().requestMatchers(HttpMethod.POST, new String[]{"/api/contact"})).permitAll().requestMatchers(new String[]{"/api/contact/admin/**"})).authenticated().requestMatchers(HttpMethod.POST, new String[]{"/api/orders/webhook/razorpay"})).permitAll().requestMatchers(HttpMethod.GET, new String[]{"/api/blogs/**"})).permitAll().requestMatchers(new String[]{"/blog/**"})).permitAll().anyRequest()).authenticated()).authenticationProvider((AuthenticationProvider)this.authenticationProvider()).addFilterBefore((Filter)this.jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class).cors(cors -> cors.configurationSource(this.corsConfigurationSource()));
-        return (SecurityFilterChain)http.build();
+        http
+                .csrf(csrf -> csrf.disable())
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(authz -> authz
+                        .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
+
+                        // Static resources
+                        .requestMatchers("/", "/index.html", "/*.js", "/*.css", "/*.json",
+                                "/*.png", "/favicon.ico", "/assets/**", "/static/**",
+                                "/uploads/**").permitAll()
+
+                        // Public pages
+                        .requestMatchers("/privacy-policy", "/terms-of-service", "/refund-policy",
+                                "/sizeGuide", "/shipping", "/returns", "/sustainability","/dashboard","/measurements").permitAll()
+
+                        // Frontend routes
+                        .requestMatchers("/admin/**", "/user/**", "/shop/**", "/login", "/signup",
+                                "/appointment/**", "/products/**", "/about/**", "/services",
+                                "/contact/**", "/testimonials/**").permitAll()
+
+                        // Auth endpoints
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // Public GET APIs
+                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**",
+                                "/api/appointments/types", "/api/appointments/available-slots").permitAll()
+
+                        // Public POST APIs
+                        .requestMatchers(HttpMethod.POST, "/api/products/search").permitAll()
+                        .requestMatchers("/api/appointments/guest").permitAll()
+
+                        // Reviews & Contact
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
+                        .requestMatchers("/api/contact/admin/**").authenticated()
+
+                        // Razorpay webhook
+                        .requestMatchers(HttpMethod.POST, "/api/orders/webhook/razorpay").permitAll()
+
+                        // Blogs
+                        .requestMatchers(HttpMethod.GET, "/api/blogs/**").permitAll()
+                        .requestMatchers("/blog/**").permitAll()
+
+                        // Everything else requires auth
+                        .anyRequest().authenticated()
+                )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        return http.build();
     }
 
     @Bean

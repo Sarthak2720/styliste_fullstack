@@ -26,6 +26,8 @@ import com.styliste.exception.ResourceNotFoundException;
 import com.styliste.repository.ProductRepository;
 import com.styliste.repository.UserRepository;
 import com.styliste.repository.WishlistRepository;
+
+import java.util.Collections;
 import java.util.HashSet;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,7 +71,17 @@ public class WishlistService {
     }
 
     private WishlistDTO mapToDTO(Wishlist wishlist) {
-        return WishlistDTO.builder().id(wishlist.getId()).userId(wishlist.getUser().getId()).products(wishlist.getProducts().stream().map(arg_0 -> this.mapToProductDTO(arg_0)).toList()).build();
+        return WishlistDTO.builder()
+                .id(wishlist.getId())
+                .userId(wishlist.getUser().getId())
+                .products(
+                        wishlist.getProducts() == null
+                                ? Collections.emptyList()
+                                : wishlist.getProducts().stream()
+                                .map(this::mapToProductDTO)
+                                .toList()
+                )
+                .build();
     }
 
     private ProductDTO mapToProductDTO(Product product) {
