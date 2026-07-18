@@ -8,6 +8,7 @@ import { productApi } from '../../api/productApi';
 import toast from 'react-hot-toast';
 import { uploadImageToLightX, uploadUrlToLightX, generateTryOn } from '../../api/lightxApi';
 import { useAuth } from '../../hooks/useAuth';
+import VirtualTryOnLoader from '../../components/public/VirtualTryOnLoader';
 
 const SERVER_URL = import.meta.env.VITE_API_IMG_URL;
 const getImageUrl = (path?: string) => {
@@ -124,59 +125,13 @@ const VirtualTryOn = () => {
           </h1>
           
           {isGenerating ? (
-            <div className="py-12 flex flex-col items-center justify-center space-y-6">
-              <style>{`
-                @keyframes progress-animation {
-                  0% { width: 5%; }
-                  15% { width: 25%; }
-                  30% { width: 45%; }
-                  50% { width: 60%; }
-                  70% { width: 75%; }
-                  90% { width: 90%; }
-                  100% { width: 95%; }
-                }
-                @keyframes pulse-ring {
-                  0% { transform: scale(0.95); opacity: 0.5; }
-                  50% { transform: scale(1.05); opacity: 1; }
-                  100% { transform: scale(0.95); opacity: 0.5; }
-                }
-              `}</style>
-              
-              {/* Spinner/Animation */}
-              <div className="relative w-28 h-28">
-                {/* Outer pulsing ring */}
-                <div 
-                  className="absolute inset-0 rounded-full border-4 border-[#7A8D6D]/30"
-                  style={{ animation: 'pulse-ring 2.5s infinite ease-in-out' }}
-                ></div>
-                {/* Inner spinning ring */}
-                <div className="absolute inset-2 rounded-full border-4 border-t-[#6B7D60] border-r-transparent border-b-[#6B7D60] border-l-transparent animate-spin"></div>
-                {/* Center icon */}
-                <div className="absolute inset-6 flex items-center justify-center text-3xl">
-                  ✨
-                </div>
-              </div>
-              
-              <div className="space-y-3 max-w-md mx-auto text-center">
-                <h3 className="text-2xl font-bold text-gray-800">Generating Your Look...</h3>
-                <p className="text-sm text-gray-500 leading-relaxed px-6">
-                  We are processing your images using advanced AI. This typically takes 30-90 seconds. Please do not close or refresh this page.
-                </p>
-              </div>
-
-              {/* Dynamic steps indicator */}
-              <div className="w-full max-w-xs bg-gray-100 rounded-full h-2 overflow-hidden shadow-inner">
-                <div 
-                  className="bg-gradient-to-r from-[#6B7D60] to-[#7A8D6D] h-full rounded-full"
-                  style={{ animation: 'progress-animation 75s cubic-bezier(0.1, 0.8, 0.1, 1) forwards' }}
-                ></div>
-              </div>
-
-              {/* Loading sub-states */}
-              <div className="text-xs font-semibold text-[#6B7D60] bg-[#6B7D60]/10 px-4 py-1.5 rounded-full animate-pulse">
-                Applying Digital Magic
-              </div>
-            </div>
+            <VirtualTryOnLoader
+              open={isGenerating}
+              productImage={productImage ?? ''}
+              userImage={userImage}
+              productName="your outfit"
+              onCancel={() => setIsGenerating(false)}
+            />
           ) : resultImage ? (
             <div className="max-w-md mx-auto space-y-6">
               <h2 className="text-2xl font-bold text-gray-800">Your Try-On Result</h2>
