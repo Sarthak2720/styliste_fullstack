@@ -322,7 +322,7 @@ interface MeasurementFormData {
 }
 
 const INITIAL_FORM_DATA: MeasurementFormData = {
-  gender: "",
+  gender: "female",
   age: "",
   height: "",
   heightUnit: "cm",
@@ -1555,7 +1555,7 @@ const Measurement = () => {
                 {currentStep === 1 && (
                   <>
                     <div>
-                      <label className="text-foreground font-medium">Gender *</label>
+                      <label className="font-medium text-gray-900">Gender *</label>
                       <select
                         ref={genderSelectRef}
                         value={formData.gender}
@@ -1563,10 +1563,9 @@ const Measurement = () => {
                           const gender = e.target.value as MeasurementFormData["gender"];
                           setFormData((prev) => ({ ...prev, gender, bodyType: "" }));
                         }}
-                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="mt-2 w-full appearance-none rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 pr-10 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary"
+                        disabled
                       >
-                        <option value="">Select gender</option>
-                        <option value="male">Male</option>
                         <option value="female">Female</option>
                       </select>
                     </div>
