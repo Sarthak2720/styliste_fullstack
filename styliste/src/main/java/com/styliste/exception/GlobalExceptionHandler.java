@@ -105,11 +105,32 @@ public class GlobalExceptionHandler {
         return new ResponseEntity(errorResponse, (HttpStatusCode)HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(value={org.springframework.web.servlet.resource.NoResourceFoundException.class})
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(org.springframework.web.servlet.resource.NoResourceFoundException ex, WebRequest request) {
+        log.error("Resource not found exception: {}", ex.getMessage());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .message("Static resource not found: " + ex.getResourcePath())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(errorResponse);
+    }
+
     @ExceptionHandler(value={Exception.class})
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
         log.error("Internal server error: ", (Throwable)ex);
-        ErrorResponse errorResponse = ErrorResponse.builder().timestamp(LocalDateTime.now()).status(HttpStatus.INTERNAL_SERVER_ERROR.value()).message("Internal server error").path(request.getDescription(false).replace("uri=", "")).build();
-        return new ResponseEntity(errorResponse, (HttpStatusCode)HttpStatus.INTERNAL_SERVER_ERROR);
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .message("Internal server error")
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(errorResponse);
     }
 }
 

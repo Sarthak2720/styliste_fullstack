@@ -339,6 +339,10 @@ class SOTABodyModel:
                 return round(weight_prior * p[key] + (1.0 - weight_prior) * mesh_val, 2)
             return round(mesh_val, 2)
 
+        # Calculate dynamic BMI to adapt corrections to the user's body size
+        height_m = height_cm / 100.0
+        bmi = (weight_kg / (height_m ** 2)) if (weight_kg is not None and height_m > 0) else 22.0
+
         # ── CIRCUMFERENCES ────────────────────────────────────────────────────
         # 1. Neck Circumference
         neck_mesh = neck_circ_override if neck_circ_override is not None else circ(self.landmarks["neck"])
@@ -351,10 +355,13 @@ class SOTABodyModel:
         mesh_shoulder = torch.sqrt(torch.sum((left_pt - right_pt) ** 2)).item()
         # Biacromial breadth is bone-to-bone; we multiply by 1.045 for tailoring shoulder width
         tailoring_prior_shoulder = p.get("shoulder", mesh_shoulder / 1.045) * 1.045
-        measurements["shoulder_width"] = round(0.75 * tailoring_prior_shoulder + 0.25 * mesh_shoulder, 2)
+        # Dynamic shoulder offset based on BMI (more deltoid flesh depth for larger builds)
+        shoulder_offset = 2.0 + max(0.0, bmi - 17.0) * 0.3
+        measurements["shoulder_width"] = round(0.75 * tailoring_prior_shoulder + 0.25 * mesh_shoulder + shoulder_offset, 2)
 
         # 3. Chest Circumference (fullest point, ~slice 70)
-        measurements["chest_circumference"] = blend("chest", circ(self.landmarks["chest"]), weight_prior=0.75)
+        # Reduced prior weight to 0.55 to allow more actual silhouette capture, and added 2.0 cm tailoring tape ease
+        measurements["chest_circumference"] = round(blend("chest", circ(self.landmarks["chest"]), weight_prior=0.55) + 2.0, 2)
 
         # 4. Upper Chest (calculate proportionally to avoid arm-pit merging bulge)
         if self.gender == "female":
@@ -369,16 +376,21 @@ class SOTABodyModel:
             measurements["lower_chest_circumference"] = round(measurements["chest_circumference"] * 0.95, 2)
 
         # 6. Waist Circumference
-        measurements["waist_circumference"] = blend("waist", circ(self.landmarks["waist"]), weight_prior=0.75)
+        # Dynamic waist offset compensates for abdominal depth estimation errors on heavier builds
+        waist_offset = 1.0 + max(0.0, bmi - 17.0) * 0.5
+        measurements["waist_circumference"] = round(blend("waist", circ(self.landmarks["waist"]), weight_prior=0.55) + waist_offset, 2)
 
         # 7. Hip Circumference (dynamic scan slices 40–52, find widest point)
-        measurements["hip_circumference"] = blend("hip", max_circ(40, 52), weight_prior=0.75)
+        # Dynamic hip offset handles leg blending on slim builds (negative offset) and boundary cropping on heavier builds (positive offset)
+        hip_offset = (bmi - 23.0) * 1.2
+        measurements["hip_circumference"] = round(blend("hip", max_circ(40, 52), weight_prior=0.40) + hip_offset, 2)
 
         # 8. Upper Thigh Circumference (garment upper thigh with ease)
-        mesh_thigh = circ(self.landmarks["thigh"])
-        ease = 5.0 if self.gender == "female" else 6.0  # 2.0 in (5.0 cm) ease for women
-        thigh_prior_val = p.get("thigh", mesh_thigh - ease) + ease
-        measurements["thigh_circumference"] = round(0.75 * thigh_prior_val + 0.25 * mesh_thigh, 2)
+        # Silhouettes at slice 35 merge both legs together, so the raw mesh circumference is corrupted.
+        # Instead, we rely 100% on the highly accurate single-leg ANSUR prior value + dynamic BMI-based tailoring ease.
+        thigh_prior_val = p.get("thigh", circ(self.landmarks["thigh"]))
+        thigh_ease = 1.0 + max(0.0, bmi - 17.0) * 0.1
+        measurements["thigh_circumference"] = round(thigh_prior_val + thigh_ease, 2)
 
         # 9. Knee Circumference (Ghutna — slice 22 + ease)
         measurements["knee_circumference"] = round(circ(self.landmarks["knee"]) + 3.0, 2)

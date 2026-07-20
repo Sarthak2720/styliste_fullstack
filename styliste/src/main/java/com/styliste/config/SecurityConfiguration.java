@@ -109,14 +109,16 @@ public class SecurityConfiguration {
                                 "/*.png", "/favicon.ico", "/assets/**", "/static/**",
                                 "/uploads/**").permitAll()
 
-                        // Public pages
-                        .requestMatchers("/privacy-policy", "/terms-of-service", "/refund-policy",
-                                "/sizeGuide", "/shipping", "/returns", "/sustainability","/dashboard","/measurements").permitAll()
-
-                        // Frontend routes
-                        .requestMatchers("/admin/**", "/user/**", "/shop/**", "/login", "/signup",
-                                "/appointment/**", "/products/**", "/about/**", "/services",
-                                "/contact/**", "/testimonials/**").permitAll()
+                        // Public frontend pages and SPA routes
+                        .requestMatchers(
+                                "/privacy-policy", "/terms-of-service", "/refund-policy",
+                                "/sizeGuide", "/shipping", "/returns", "/sustainability",
+                                "/dashboard", "/dashboard/**",
+                                "/measurements", "/measurements/**",
+                                "/wishlist", "/wishlist/**",
+                                "/orders", "/orders/**",
+                                "/admin/**", "/user/**", "/shop/**", "/login", "/signup", "/appointment/**", "/products/**", "/about/**", "/services", "/contact/**", "/testimonials/**", "/measurements/**", "/orders/**", "/wishlist", "/cart", "/checkout", "/profile", "/virtual-try-on", "/virtual-try-on/**"
+                        ).permitAll()
 
                         // Auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
