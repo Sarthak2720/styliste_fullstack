@@ -128,6 +128,7 @@ import {
   FiFileText,
   FiUserCheck,
   FiSettings,
+  FiMessageSquare,
 } from "react-icons/fi";
 import useAuth from "../../hooks/useAuth";
 import logo from "../../assets/logo.png";
@@ -150,6 +151,7 @@ const AdminLayout = () => {
     { name: "Appointments", path: "/admin/appointments", icon: FiCalendar },
     { name: "Measurements", path: "/admin/measurements", icon: FiUserCheck },
     { name: "Blog Management", path: "/admin/blogs", icon: FiFileText },
+    { name: "Testimonials Management", path: "/admin/testimonials", icon: FiMessageSquare },
     { name: "Virtual Try On", path: "/admin/try-on-settings", icon: FiSettings },
     { name: "Visit Site", path: "/", icon: FiExternalLink, external: true },
     { name: "Contact Messages", path: "/admin/contacts", icon: FiMail },
@@ -300,7 +302,7 @@ const AdminLayout = () => {
       </div>
 
       {/* Main Content Area */}
-      <main className="md:ml-72 min-h-screen p-4 md:p-6 bg-gray-50 pt-20 md:pt-6">
+      <main className="md:ml-72 min-h-screen bg-gray-50 pt-20 md:pt-6">
         <div className="w-full min-h-full">
           <Outlet />
         </div>

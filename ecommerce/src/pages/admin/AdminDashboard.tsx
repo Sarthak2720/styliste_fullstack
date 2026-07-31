@@ -311,6 +311,7 @@ import toast from 'react-hot-toast';
 // IMPORTANT — Correct Import
 import AdminAppointment from './AdminAppointment';
 import AdminTryOnSettings from './AdminTryOnSettings';
+import AdminTestimonialsManagement from './AdminTestimonialsManagement';
 
 const getStatusClasses = (status: string) => {
   switch (status) {
@@ -704,6 +705,7 @@ const AdminDashboard = () => {
           <Route path="orders" element={<AdminOrders />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="appointments" element={<AdminAppointment />} />
+          <Route path="testimonials" element={<AdminTestimonialsManagement />} />
           <Route path="try-on-settings" element={<AdminTryOnSettings />} />
         </Routes>
       </div>

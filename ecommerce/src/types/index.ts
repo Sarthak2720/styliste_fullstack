@@ -32,6 +32,10 @@ export interface SignUpRequest {
   phone?: string;
 }
 
+export interface GoogleAuthRequest {
+  code: string;
+}
+
 // ==================== PRODUCT ====================
 export interface ProductAttribute {
   id: Key | null | undefined;

@@ -274,6 +274,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminMeasurements from './pages/admin/AdminMeasurements';
 import AdminBlogCreate from './pages/admin/AdminBlogCreate';
 import AdminTryOnSettings from './pages/admin/AdminTryOnSettings';
+import AdminTestimonialsManagement from './pages/admin/AdminTestimonialsManagement';
 
 const NotFound = () => (
   <div className="p-8 text-center text-red-500">
@@ -408,6 +409,7 @@ function App() {
   <Route path="contacts" element={<ContactMessages />} />
   <Route path="measurements" element={<AdminMeasurements />} />
   <Route path="blogs" element={<AdminBlogCreate />} />
+  <Route path="testimonials" element={<AdminTestimonialsManagement />} />
   <Route path="reports" element={<div className="p-6">Reports Page</div>} />
   <Route path="settings" element={<div className="p-6">Settings Page</div>} />
   <Route path="try-on-settings" element={<AdminTryOnSettings />} />

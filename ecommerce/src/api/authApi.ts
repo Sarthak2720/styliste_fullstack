@@ -34,7 +34,7 @@
 
 
 import axiosInstance from './axios';
-import type { AuthResponse, LoginRequest, SignUpRequest } from '../types';
+import type { AuthResponse, GoogleAuthRequest, LoginRequest, SignUpRequest } from '../types';
 
 export const authApi = {
 
@@ -56,6 +56,22 @@ export const authApi = {
     const response = await axiosInstance.post<AuthResponse>(
       '/auth/signup',
       userData
+    );
+    return response.data;
+  },
+
+  // =============================
+  // Google Login
+  // =============================
+  googleLogin: async (payload: GoogleAuthRequest): Promise<AuthResponse> => {
+    const response = await axiosInstance.post<AuthResponse>(
+      '/auth/google',
+      payload,
+      {
+        headers: {
+          'X-Requested-With': 'XmlHttpRequest',
+        },
+      }
     );
     return response.data;
   },

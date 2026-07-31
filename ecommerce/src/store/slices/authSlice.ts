@@ -180,7 +180,7 @@
 
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import { authApi } from '../../api/authApi';
-import type { AuthResponse, LoginRequest, SignUpRequest, User } from '../../types';
+import type { AuthResponse, GoogleAuthRequest, LoginRequest, SignUpRequest, User } from '../../types';
 
 interface AuthState {
   user: User | null;
@@ -250,6 +250,31 @@ export const signup = createAsyncThunk<AuthResponse, SignUpRequest, { rejectValu
       return response;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Signup failed');
+    }
+  }
+);
+
+export const googleLogin = createAsyncThunk<AuthResponse, GoogleAuthRequest, { rejectValue: string }>(
+  'auth/googleLogin',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await authApi.googleLogin(payload);
+
+      if (!response.token) {
+        throw new Error('Server response missing token');
+      }
+
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify({
+        id: response.id,
+        name: response.name,
+        email: response.email,
+        role: response.role,
+      }));
+
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Google login failed');
     }
   }
 );
@@ -353,6 +378,30 @@ const authSlice = createSlice({
       .addCase(signup.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || 'Signup failed';
+      });
+
+    // Google Login
+    builder
+      .addCase(googleLogin.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(googleLogin.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.token = action.payload.token;
+        state.user = {
+          id: action.payload.id,
+          name: action.payload.name,
+          email: action.payload.email,
+          role: action.payload.role as 'ADMIN' | 'CUSTOMER',
+          isActive: true,
+        };
+        state.error = null;
+      })
+      .addCase(googleLogin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Google login failed';
       });
 
     // Logout

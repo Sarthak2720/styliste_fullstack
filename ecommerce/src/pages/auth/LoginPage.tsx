@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, type Variants } from 'framer-motion';
 import {
@@ -9,6 +9,7 @@ import {
   FiLock,
   FiMail,
 } from 'react-icons/fi';
+import { FcGoogle } from 'react-icons/fc';
 import toast from 'react-hot-toast';
 
 import logo from '../../assets/logo.png';
@@ -18,7 +19,7 @@ import heroTwo from '../../assets/img1.png';
 // import sareeGown from '../../assets/saree-gown.jpg';
 
 import { useAuth, useAppDispatch } from '../../hooks/useAuth';
-import { login } from '../../store/slices/authSlice';
+import { googleLogin, login } from '../../store/slices/authSlice';
 import { mergeGuestCartAfterLogin } from '../../utils/cartMerge';
 
 type LoginLocationState = {
@@ -130,6 +131,37 @@ const LoginPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const googleClientRef = useRef<any>(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+  const [isGoogleReady, setIsGoogleReady] = useState(false);
+
+  useEffect(() => {
+    const originalWarn = console.warn;
+    const originalError = console.error;
+    
+    const filterCoopWarnings = (message: string) => {
+      return typeof message === 'string' && 
+             (message.includes('Cross-Origin-Opener-Policy') || 
+              message.includes('window.closed'));
+    };
+    
+    console.warn = (...args: any[]) => {
+      if (args.length > 0 && !filterCoopWarnings(String(args[0]))) {
+        originalWarn(...args);
+      }
+    };
+    
+    console.error = (...args: any[]) => {
+      if (args.length > 0 && !filterCoopWarnings(String(args[0]))) {
+        originalError(...args);
+      }
+    };
+    
+    return () => {
+      console.warn = originalWarn;
+      console.error = originalError;
+    };
+  }, []);
 
   useEffect(() => {
     if (!loginSuccess || isLoading) {
@@ -158,6 +190,135 @@ const LoginPage = () => {
 
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!googleClientId) {
+      setIsGoogleReady(false);
+      return;
+    }
+
+    const scriptId = 'google-identity-services';
+    const initializeGoogleClient = () => {
+      if (googleClientRef.current) {
+        setIsGoogleReady(true);
+        return;
+      }
+
+      const google = (window as Window & { google?: any }).google;
+
+      if (!google?.accounts?.oauth2) {
+        setIsGoogleReady(false);
+        return;
+      }
+
+      googleClientRef.current = google.accounts.oauth2.initCodeClient({
+        client_id: googleClientId,
+        scope: 'openid email profile',
+        ux_mode: 'popup',
+        callback: async (response: { code?: string; error?: string; error_description?: string }) => {
+          if (response.error) {
+            setIsSubmitting(false);
+            let errorMsg = response.error_description || 'Google sign-in was cancelled.';
+            if (response.error === 'access_denied') {
+              errorMsg = 'You denied permission to sign in with Google.';
+            }
+            toast.error(errorMsg);
+            console.warn('[Google Auth] Error:', response.error, errorMsg);
+            return;
+          }
+
+          if (!response.code) {
+            setIsSubmitting(false);
+            toast.error('Google sign-in did not return an authorization code.');
+            console.warn('[Google Auth] No code received from Google.');
+            return;
+          }
+
+          try {
+            await dispatch(googleLogin({ code: response.code })).unwrap();
+            await mergeGuestCartAfterLogin(reduxDispatch);
+            toast.success('Login successful!');
+            setLoginSuccess(true);
+          } catch (error: unknown) {
+            const message =
+              typeof error === 'string'
+                ? error
+                : error instanceof Error
+                  ? error.message
+                  : 'Google login failed';
+            toast.error(message);
+            console.error('[Google Auth] Backend error:', error);
+            setIsSubmitting(false);
+          }
+        },
+        error_callback: (error: { type?: string; message?: string }) => {
+          setIsSubmitting(false);
+          let errorMsg = error?.message || 'Unable to start Google sign-in.';
+          if (error?.type === 'popup_closed_by_user') {
+            errorMsg = 'Google sign-in popup was closed.';
+          } else if (errorMsg.includes('redirect_uri_mismatch') || errorMsg.includes('redirect')) {
+            errorMsg = 'Google OAuth configuration issue. Please contact support or try again later.';
+          }
+          toast.error(errorMsg);
+          console.error('[Google Auth] Error callback:', error);
+        },
+      });
+
+      setIsGoogleReady(true);
+    };
+
+    const existingScript = document.getElementById(scriptId) as HTMLScriptElement | null;
+    if (existingScript) {
+      if ((window as Window & { google?: any }).google) {
+        initializeGoogleClient();
+      } else {
+        existingScript.addEventListener('load', initializeGoogleClient, { once: true });
+      }
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = initializeGoogleClient;
+    script.onerror = () => {
+      setIsGoogleReady(false);
+      toast.error('Unable to load Google sign-in right now.');
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      script.onload = null;
+      script.onerror = null;
+    };
+  }, [dispatch, googleClientId, reduxDispatch]);
+
+  const handleGoogleLogin = () => {
+    if (!googleClientId) {
+      toast.error('Google sign-in is not configured.');
+      return;
+    }
+
+    if (!googleClientRef.current || !isGoogleReady) {
+      toast.error('Google sign-in is still loading. Please try again.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      googleClientRef.current.requestCode();
+    } catch (err) {
+      setIsSubmitting(false);
+      const errMsg = err instanceof Error ? err.message : 'Unable to open Google sign-in.';
+      if (!errMsg.includes('COOP')) {
+        toast.error(errMsg);
+      }
+      console.warn('[Google Auth] Popup error (may be COOP related):', err);
+    }
+  };
 
   const goToPreviousSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + sliderImages.length) % sliderImages.length);
@@ -387,6 +548,23 @@ const LoginPage = () => {
                   className="mt-4 w-full rounded-full bg-sage/100 py-2 text-sm font-medium text-white transition hover:bg-sage/80"
                 >
                   Login
+                </motion.button>
+
+                <motion.div variants={formItemVariants} className="mt-4 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-[#e4e7ef]" />
+                  <span className="text-[11px] uppercase tracking-[0.22em] text-neutral-500">Or</span>
+                  <div className="h-px flex-1 bg-[#e4e7ef]" />
+                </motion.div>
+
+                <motion.button
+                  variants={formItemVariants}
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={isSubmitting || !isGoogleReady}
+                  className="mt-4 flex w-full items-center justify-center gap-3 rounded-full border border-[#d6d9e2] bg-white py-2 text-sm font-medium text-[#1f2336] transition hover:bg-[#f8f9fd] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <FcGoogle size={18} />
+                  <span>{isGoogleReady ? 'Continue with Google' : 'Loading Google...'}</span>
                 </motion.button>
 
                 <motion.div variants={formItemVariants} className="mt-3 text-center text-xs text-neutral-500">
