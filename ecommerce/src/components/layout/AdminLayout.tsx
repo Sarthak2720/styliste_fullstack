@@ -302,7 +302,7 @@ const AdminLayout = () => {
       </div>
 
       {/* Main Content Area */}
-      <main className="md:ml-72 min-h-screen bg-gray-50 pt-20 md:pt-6">
+      <main className="md:ml-72 min-h-screen bg-gray-50 pt-20 md:pt-6 px-4 md:px-6 lg:px-8">
         <div className="w-full min-h-full">
           <Outlet />
         </div>

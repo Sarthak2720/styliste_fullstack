@@ -28,8 +28,11 @@ package com.styliste.controller;
 import com.styliste.dto.AuthRequest;
 import com.styliste.dto.AuthResponse;
 import com.styliste.dto.ForgotPasswordRequest;
+import com.styliste.dto.GoogleAuthRequest;
 import com.styliste.dto.ResetPasswordRequest;
 import com.styliste.dto.SignUpRequest;
+import com.styliste.dto.TokenRefreshRequest;
+import com.styliste.dto.TokenRefreshResponse;
 import com.styliste.dto.VerifyOtpRequest;
 import com.styliste.service.AuthService;
 import jakarta.validation.Valid;
@@ -42,6 +45,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -65,8 +69,28 @@ public class AuthController {
         return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(this.authService.signup(request));
     }
 
+    @PostMapping(value={"/google"})
+    public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleAuthRequest request, @RequestHeader(value="Origin", required=false) String origin, @RequestHeader(value="X-Requested-With", required=false) String requestedWith) {
+        log.info("Google login attempt received");
+        return ResponseEntity.ok(this.authService.googleLogin(request.getCode(), origin, requestedWith));
+    }
+
+    @PostMapping(value={"/refresh"})
+    public ResponseEntity<TokenRefreshResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
+        log.info("Refresh token request received");
+        return ResponseEntity.ok(this.authService.refreshToken(request.getRefreshToken()));
+    }
+
     @PostMapping(value={"/logout"})
-    public ResponseEntity<String> logout() {
+    public ResponseEntity<String> logout(@RequestHeader(value="X-Refresh-Token", required=false) String refreshTokenHeader,
+                                         @RequestBody(required=false) TokenRefreshRequest request) {
+        String refreshTokenValue = null;
+        if (request != null && request.getRefreshToken() != null && !request.getRefreshToken().isBlank()) {
+            refreshTokenValue = request.getRefreshToken();
+        } else if (refreshTokenHeader != null && !refreshTokenHeader.isBlank()) {
+            refreshTokenValue = refreshTokenHeader;
+        }
+        this.authService.logout(refreshTokenValue);
         return ResponseEntity.ok("Logged out successfully");
     }
 

@@ -17,6 +17,7 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
+import testimonialApi from "../../api/testimonialApi";
 
 const OLIVE_DARK = "#5c6a42";
 const OLIVE_BANNER = "#66713f";
@@ -25,12 +26,21 @@ const CREAM = "#fbfaf6";
 const INK = "#2f2b1e";
 const MUTED = "#7a7566";
 
-const STORAGE_KEY_TESTIMONIALS = "styliste:testimonials";
-const STORAGE_KEY_VIDEOS = "styliste:videos";
-const STORAGE_KEY_QUOTE = "styliste:featured-quote";
+const IMG_BASE = import.meta.env.VITE_API_IMG_URL || "http://localhost:8080";
+
+function getAssetUrl(url: string) {
+  if (!url) return "";
+  if (url.startsWith("data:") || url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  if (url.startsWith("/")) {
+    return `${IMG_BASE}${url}`;
+  }
+  return `${IMG_BASE}/${url}`;
+}
 
 type Testimonial = {
-  id: string;
+  id?: string | number;
   name: string;
   location: string;
   rating: number;
@@ -40,97 +50,17 @@ type Testimonial = {
 };
 
 type VideoItem = {
-  id: string;
+  id?: string | number;
   videoUrl: string;
   caption: string;
 };
 
-const seedTestimonials: Testimonial[] = [
-  {
-    id: "t1",
-    name: "Priya Sharma",
-    location: "Thane West",
-    rating: 5,
-    tag: "Saree Upscaling",
-    message:
-      "Absolutely amazing experience! Babita ma'am transformed my mother's old Banarasi saree into a stunning lehenga for my engagement. The craftsmanship is impeccable and the fit was perfect.",
-    photo: "",
-  },
-  {
-    id: "t2",
-    name: "Ananya Patel",
-    location: "Mulund",
-    rating: 5,
-    tag: "Bespoke Tailoring",
-    message:
-      "The doorstep service is so convenient! The tailor came home, took measurements, and delivered my blouse within a week. Perfect fitting and beautiful work.",
-    photo: "",
-  },
-  {
-    id: "t3",
-    name: "Sneha Desai",
-    location: "Ghatkopar",
-    rating: 5,
-    tag: "Bridal Wear",
-    message:
-      "Got my bridal lehenga designed here and it was beyond my expectations. The attention to detail in the embroidery work, everything was just perfect for my special day.",
-    photo: "",
-  },
-];
-
-const seedVideos: VideoItem[] = [
-  { id: "v1", videoUrl: "", caption: "Behind the scenes at the atelier" },
-  { id: "v2", videoUrl: "", caption: "Draping a bridal lehenga" },
-  { id: "v3", videoUrl: "", caption: "Client fitting session" },
-];
-
-const seedQuote =
-  "Styliste Couturier has transformed how I think about fashion. Every piece feels special.";
-
 function emptyTestimonial(): Testimonial {
-  return { id: "", name: "", location: "", rating: 5, tag: "", message: "", photo: "" };
+  return { name: "", location: "", rating: 5, tag: "", message: "", photo: "" };
 }
 
 function emptyVideo(): VideoItem {
-  return { id: "", videoUrl: "", caption: "" };
-}
-
-function useStorageState<T>(key: string, seed: T) {
-  const [value, setValue] = useState<T>(seed);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    try {
-      const raw = localStorage.getItem(key);
-      if (!cancelled && raw) {
-        setValue(JSON.parse(raw) as T);
-      }
-    } catch {
-      // ignore bad or missing storage entry
-    } finally {
-      if (!cancelled) setLoaded(true);
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [key]);
-
-  const persist = useCallback(
-    async (next: T) => {
-      setValue(next);
-      try {
-        localStorage.setItem(key, JSON.stringify(next));
-      } catch (error) {
-        console.error("Storage save failed", error);
-      }
-    },
-    [key]
-  );
-
-  return [value, persist, loaded] as const;
+  return { videoUrl: "", caption: "" };
 }
 
 function Stars({ count, size = 14 }: { count: number; size?: number }) {
@@ -160,18 +90,54 @@ function SavedPing({ show }: { show: boolean }) {
 
 export default function AdminTestimonialsManagement() {
   const [tab, setTab] = useState<"admin" | "preview">("admin");
-  const [testimonials, saveTestimonials, tLoaded] = useStorageState<Testimonial[]>(STORAGE_KEY_TESTIMONIALS, seedTestimonials);
-  const [videos, saveVideos, vLoaded] = useStorageState<VideoItem[]>(STORAGE_KEY_VIDEOS, seedVideos);
-  const [quote, saveQuote, qLoaded] = useStorageState<string>(STORAGE_KEY_QUOTE, seedQuote);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [videos, setVideos] = useState<VideoItem[]>([]);
+  const [quote, setQuote] = useState<string>("");
+  const [tLoaded, setTLoaded] = useState(false);
+  const [vLoaded, setVLoaded] = useState(false);
+  const [qLoaded, setQLoaded] = useState(false);
 
   const [tForm, setTForm] = useState<Testimonial | null>(null);
   const [vForm, setVForm] = useState<VideoItem | null>(null);
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
   const [quoteDraft, setQuoteDraft] = useState(quote);
   const [pingT, setPingT] = useState(false);
   const [pingV, setPingV] = useState(false);
   const [pingQ, setPingQ] = useState(false);
 
-  useEffect(() => setQuoteDraft(quote), [quote]);
+  useEffect(() => {
+    testimonialApi.getTestimonials()
+      .then((data) => {
+        setTestimonials(data);
+        setTLoaded(true);
+      })
+      .catch((err) => {
+        console.error("Failed to load testimonials:", err);
+        setTLoaded(true);
+      });
+
+    testimonialApi.getVideoTestimonials()
+      .then((data) => {
+        setVideos(data);
+        setVLoaded(true);
+      })
+      .catch((err) => {
+        console.error("Failed to load videos:", err);
+        setVLoaded(true);
+      });
+
+    testimonialApi.getFeaturedQuote()
+      .then((data) => {
+        setQuote(data);
+        setQuoteDraft(data);
+        setQLoaded(true);
+      })
+      .catch((err) => {
+        console.error("Failed to load quote:", err);
+        setQLoaded(true);
+      });
+  }, []);
+
   const ready = tLoaded && vLoaded && qLoaded;
 
   const flash = useCallback((setter: (value: boolean) => void) => {
@@ -191,21 +157,32 @@ export default function AdminTestimonialsManagement() {
     e.preventDefault();
     if (!tForm?.name.trim() || !tForm.message.trim()) return;
 
-    let next: Testimonial[];
-    if (tForm.id) {
-      next = testimonials.map((item) => (item.id === tForm.id ? tForm : item));
-    } else {
-      next = [...testimonials, { ...tForm, id: `t${Date.now()}` }];
+    try {
+      if (tForm.id) {
+        const updated = await testimonialApi.updateTestimonial(tForm.id, tForm);
+        setTestimonials(testimonials.map((item) => (item.id === tForm.id ? updated : item)));
+      } else {
+        const created = await testimonialApi.createTestimonial(tForm);
+        setTestimonials([...testimonials, created]);
+      }
+      setTForm(null);
+      flash(setPingT);
+    } catch (err) {
+      console.error("Failed to save testimonial:", err);
+      window.alert("Failed to save testimonial.");
     }
-
-    await saveTestimonials(next);
-    setTForm(null);
-    flash(setPingT);
   }
 
-  async function deleteTestimonial(id: string) {
-    await saveTestimonials(testimonials.filter((item) => item.id !== id));
-    flash(setPingT);
+  async function deleteTestimonial(id: string | number) {
+    if (!window.confirm("Are you sure you want to delete this testimonial?")) return;
+    try {
+      await testimonialApi.deleteTestimonial(id);
+      setTestimonials(testimonials.filter((item) => item.id !== id));
+      flash(setPingT);
+    } catch (err) {
+      console.error("Failed to delete testimonial:", err);
+      window.alert("Failed to delete testimonial.");
+    }
   }
 
   function startAddVideo() {
@@ -220,27 +197,44 @@ export default function AdminTestimonialsManagement() {
     e.preventDefault();
     if (!vForm?.caption.trim()) return;
 
-    let next: VideoItem[];
-    if (vForm.id) {
-      next = videos.map((item) => (item.id === vForm.id ? vForm : item));
-    } else {
-      next = [...videos, { ...vForm, id: `v${Date.now()}` }];
+    try {
+      if (vForm.id) {
+        const updated = await testimonialApi.updateVideoTestimonial(vForm.id, vForm);
+        setVideos(videos.map((item) => (item.id === vForm.id ? updated : item)));
+      } else {
+        const created = await testimonialApi.createVideoTestimonial(vForm);
+        setVideos([...videos, created]);
+      }
+      setVForm(null);
+      flash(setPingV);
+    } catch (err) {
+      console.error("Failed to save video:", err);
+      window.alert("Failed to save video.");
     }
-
-    await saveVideos(next);
-    setVForm(null);
-    flash(setPingV);
   }
 
-  async function deleteVideo(id: string) {
-    await saveVideos(videos.filter((item) => item.id !== id));
-    flash(setPingV);
+  async function deleteVideo(id: string | number) {
+    if (!window.confirm("Are you sure you want to delete this video?")) return;
+    try {
+      await testimonialApi.deleteVideoTestimonial(id);
+      setVideos(videos.filter((item) => item.id !== id));
+      flash(setPingV);
+    } catch (err) {
+      console.error("Failed to delete video:", err);
+      window.alert("Failed to delete video.");
+    }
   }
 
   async function submitQuote(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    await saveQuote(quoteDraft);
-    flash(setPingQ);
+    try {
+      const updatedQuote = await testimonialApi.updateFeaturedQuote(quoteDraft);
+      setQuote(updatedQuote);
+      flash(setPingQ);
+    } catch (err) {
+      console.error("Failed to save quote banner:", err);
+      window.alert("Failed to update banner.");
+    }
   }
 
   const previewVideos = useMemo(() => videos, [videos]);
@@ -257,6 +251,11 @@ export default function AdminTestimonialsManagement() {
 
   return (
     <div style={{ fontFamily: "Georgia, serif", background: CREAM, minHeight: "100%", color: INK }}>
+      <style>{`
+        .video-thumbnail-container:hover .play-overlay {
+          opacity: 1 !important;
+        }
+      `}</style>
       <div style={{ padding: "0 0 18px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>
@@ -296,9 +295,74 @@ export default function AdminTestimonialsManagement() {
           pingT={pingT}
           pingV={pingV}
           pingQ={pingQ}
+          onViewVideo={setActiveVideoUrl}
         />
       ) : (
         <PreviewPage testimonials={testimonials} videos={previewVideos} quote={quote} />
+      )}
+
+      {activeVideoUrl && (
+        <div 
+          onClick={() => setActiveVideoUrl(null)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: 20,
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "relative",
+              background: "#fff",
+              borderRadius: 12,
+              padding: 16,
+              maxWidth: 640,
+              width: "100%",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            }}
+          >
+            <button 
+              onClick={() => setActiveVideoUrl(null)}
+              style={{
+                position: "absolute",
+                top: -35,
+                right: 0,
+                background: "none",
+                border: "none",
+                color: "#fff",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              <X size={18} /> Close
+            </button>
+            <video 
+              src={getAssetUrl(activeVideoUrl)} 
+              controls 
+              autoPlay 
+              style={{
+                width: "100%",
+                borderRadius: 8,
+                maxHeight: "75vh",
+                background: "#000",
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
@@ -348,6 +412,7 @@ function AdminPanel(props: {
   pingT: boolean;
   pingV: boolean;
   pingQ: boolean;
+  onViewVideo: (url: string) => void;
 }) {
   const {
     testimonials,
@@ -370,7 +435,61 @@ function AdminPanel(props: {
     pingT,
     pingV,
     pingQ,
+    onViewVideo,
   } = props;
+
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("video/")) {
+      window.alert("Please choose a valid video file.");
+      return;
+    }
+
+    setIsUploadingVideo(true);
+    try {
+      const response = await testimonialApi.uploadFile(file, 'video');
+      setVForm((current) => ({
+        ...current!,
+        videoUrl: response.url,
+        caption: current?.caption?.trim() || file.name.replace(/\.[^.]+$/, ""),
+      }));
+    } catch (err) {
+      console.error("Failed to upload video:", err);
+      window.alert("Failed to upload video. Please check file size and try again.");
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
+
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      window.alert("Please choose a valid image file.");
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      const response = await testimonialApi.uploadFile(file, 'image');
+      setTForm((current) => ({
+        ...current!,
+        photo: response.url,
+      }));
+    } catch (err) {
+      console.error("Failed to upload photo:", err);
+      window.alert("Failed to upload photo. Please check file size and try again.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
@@ -393,26 +512,74 @@ function AdminPanel(props: {
         {vForm && (
           <form onSubmit={submitVideo} style={cardFormStyle}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <Field label="Video URL (.mp4 link, optional)">
-                <input value={vForm.videoUrl} onChange={(e) => setVForm({ ...vForm, videoUrl: e.target.value })} placeholder="https://…" style={inputStyle()} />
+              <Field label="Video file or URL">
+                <div style={{ display: "grid", gap: 8 }}>
+                  <input value={vForm.videoUrl} onChange={(e) => setVForm({ ...vForm, videoUrl: e.target.value })} placeholder="https://…" style={inputStyle()} disabled={isUploadingVideo} />
+                  {isUploadingVideo ? (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: MUTED, padding: "7px 0" }}>
+                      <Loader2 size={14} className="spin" /> Uploading video...
+                    </span>
+                  ) : (
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, width: "fit-content", padding: "7px 12px", borderRadius: 7, border: `1px solid ${OLIVE_DARK}`, background: "#fff", color: OLIVE_DARK, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                      <input type="file" accept="video/*" onChange={handleVideoUpload} style={{ display: "none" }} />
+                      Upload video
+                    </label>
+                  )}
+                </div>
               </Field>
               <Field label="Caption">
-                <input value={vForm.caption} onChange={(e) => setVForm({ ...vForm, caption: e.target.value })} placeholder="Draping a bridal lehenga" style={inputStyle()} />
+                <input value={vForm.caption} onChange={(e) => setVForm({ ...vForm, caption: e.target.value })} placeholder="Draping a bridal lehenga" style={inputStyle()} disabled={isUploadingVideo} />
               </Field>
             </div>
-            <FormActions onCancel={() => setVForm(null)} />
+            <FormActions onCancel={() => setVForm(null)} disabled={isUploadingVideo} />
           </form>
         )}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12, marginTop: 12 }}>
           {videos.map((video) => (
             <div key={video.id} style={rowCardStyle}>
-              <div style={{ background: "#111", borderRadius: 8, height: 90, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8, position: "relative", overflow: "hidden" }}>
-                {video.videoUrl ? <video src={video.videoUrl} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Play size={22} color="#888" />}
+              <div 
+                onClick={() => video.videoUrl && onViewVideo(video.videoUrl)}
+                style={{ 
+                  background: "#111", 
+                  borderRadius: 8, 
+                  height: 90, 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center", 
+                  marginBottom: 8, 
+                  position: "relative", 
+                  overflow: "hidden",
+                  cursor: video.videoUrl ? "pointer" : "default"
+                }}
+                className="video-thumbnail-container"
+              >
+                {video.videoUrl ? (
+                  <>
+                    <video src={getAssetUrl(video.videoUrl)} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <div style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      background: "rgba(0,0,0,0.4)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: 0,
+                      transition: "opacity 0.2s ease",
+                    }} className="play-overlay">
+                      <Play size={24} color="#fff" fill="#fff" />
+                    </div>
+                  </>
+                ) : (
+                  <Play size={22} color="#888" />
+                )}
                 <VolumeX size={14} color="#eee" style={{ position: "absolute", bottom: 6, right: 8 }} />
               </div>
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{video.caption || "Untitled clip"}</div>
-              <RowActions onEdit={() => startEditVideo(video)} onDelete={() => deleteVideo(video.id)} />
+              <RowActions onView={video.videoUrl ? () => onViewVideo(video.videoUrl) : undefined} onEdit={() => startEditVideo(video)} onDelete={() => deleteVideo(video.id)} />
             </div>
           ))}
           {videos.length === 0 && <EmptyNote text="No videos yet — add one above." />}
@@ -423,20 +590,72 @@ function AdminPanel(props: {
         {tForm && (
           <form onSubmit={submitTestimonial} style={cardFormStyle}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <Field label="Client name"><input value={tForm.name} onChange={(e) => setTForm({ ...tForm, name: e.target.value })} style={inputStyle()} required /></Field>
-              <Field label="Location"><input value={tForm.location} onChange={(e) => setTForm({ ...tForm, location: e.target.value })} style={inputStyle()} /></Field>
-              <Field label="Service tag"><input value={tForm.tag} onChange={(e) => setTForm({ ...tForm, tag: e.target.value })} placeholder="Bridal Wear" style={inputStyle()} /></Field>
-              <Field label="Photo URL (optional)"><input value={tForm.photo} onChange={(e) => setTForm({ ...tForm, photo: e.target.value })} placeholder="https://…" style={inputStyle()} /></Field>
+              <Field label="Client name"><input value={tForm.name} onChange={(e) => setTForm({ ...tForm, name: e.target.value })} style={inputStyle()} required disabled={isUploadingPhoto} /></Field>
+              <Field label="Location"><input value={tForm.location} onChange={(e) => setTForm({ ...tForm, location: e.target.value })} style={inputStyle()} disabled={isUploadingPhoto} /></Field>
+              <Field label="Service tags (press Enter to add)">
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {tForm.tag ? tForm.tag.split(",").map((t) => t.trim()).filter(Boolean).map((tag, idx) => (
+                      <span key={idx} style={{ ...tagStyle, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        {tag}
+                        <X 
+                          size={11} 
+                          style={{ cursor: "pointer" }} 
+                          onClick={() => {
+                            const newTags = tForm.tag.split(",").map((t) => t.trim()).filter(Boolean).filter((_, i) => i !== idx);
+                            setTForm({ ...tForm, tag: newTags.join(", ") });
+                          }}
+                        />
+                      </span>
+                    )) : null}
+                  </div>
+                  <input 
+                    placeholder="e.g. Bridal Wear (type and press Enter)" 
+                    style={inputStyle()} 
+                    disabled={isUploadingPhoto}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = e.currentTarget.value.trim();
+                        if (!val) return;
+                        const currentTags = tForm.tag ? tForm.tag.split(",").map((t) => t.trim()).filter(Boolean) : [];
+                        if (currentTags.includes(val)) {
+                          e.currentTarget.value = "";
+                          return;
+                        }
+                        const newTags = [...currentTags, val];
+                        setTForm({ ...tForm, tag: newTags.join(", ") });
+                        e.currentTarget.value = "";
+                      }
+                    }}
+                  />
+                </div>
+              </Field>
+              <Field label="Photo URL or File">
+                <div style={{ display: "grid", gap: 8 }}>
+                  <input value={tForm.photo} onChange={(e) => setTForm({ ...tForm, photo: e.target.value })} placeholder="https://…" style={inputStyle()} disabled={isUploadingPhoto} />
+                  {isUploadingPhoto ? (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: MUTED, padding: "7px 0" }}>
+                      <Loader2 size={14} className="spin" /> Uploading photo...
+                    </span>
+                  ) : (
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, width: "fit-content", padding: "7px 12px", borderRadius: 7, border: `1px solid ${OLIVE_DARK}`, background: "#fff", color: OLIVE_DARK, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                      <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{ display: "none" }} />
+                      Upload photo
+                    </label>
+                  )}
+                </div>
+              </Field>
               <Field label="Rating">
-                <select value={tForm.rating} onChange={(e) => setTForm({ ...tForm, rating: Number(e.target.value) })} style={inputStyle()}>
+                <select value={tForm.rating} onChange={(e) => setTForm({ ...tForm, rating: Number(e.target.value) })} style={inputStyle()} disabled={isUploadingPhoto}>
                   {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} stars</option>)}
                 </select>
               </Field>
             </div>
             <Field label="Message">
-              <textarea value={tForm.message} onChange={(e) => setTForm({ ...tForm, message: e.target.value })} rows={3} style={inputStyle({ resize: "vertical" })} required />
+              <textarea value={tForm.message} onChange={(e) => setTForm({ ...tForm, message: e.target.value })} rows={3} style={inputStyle({ resize: "vertical" })} required disabled={isUploadingPhoto} />
             </Field>
-            <FormActions onCancel={() => setTForm(null)} />
+            <FormActions onCancel={() => setTForm(null)} disabled={isUploadingPhoto} />
           </form>
         )}
 
@@ -445,7 +664,7 @@ function AdminPanel(props: {
             <div key={testimonial.id} style={rowCardStyle}>
               <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
                 <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#e7e3d5", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {testimonial.photo ? <img src={testimonial.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <ImageIcon size={14} color={MUTED} />}
+                  {testimonial.photo ? <img src={getAssetUrl(testimonial.photo)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <ImageIcon size={14} color={MUTED} />}
                 </div>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700 }}>{testimonial.name}</div>
@@ -454,7 +673,13 @@ function AdminPanel(props: {
               </div>
               <Stars count={testimonial.rating} />
               <div style={{ fontSize: 12.5, color: "#4a4636", margin: "6px 0 8px", lineHeight: 1.4 }}>{testimonial.message.length > 110 ? testimonial.message.slice(0, 110) + "…" : testimonial.message}</div>
-              {testimonial.tag && <span style={tagStyle}>{testimonial.tag}</span>}
+              {testimonial.tag && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+                  {testimonial.tag.split(",").map((t) => t.trim()).filter(Boolean).map((tag, idx) => (
+                    <span key={idx} style={tagStyle}>{tag}</span>
+                  ))}
+                </div>
+              )}
               <div style={{ marginTop: 8 }}><RowActions onEdit={() => startEditTestimonial(testimonial)} onDelete={() => deleteTestimonial(testimonial.id)} /></div>
             </div>
           ))}
@@ -485,18 +710,19 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: MUTED, marginBottom: 10 }}>{label}{children}</label>;
 }
 
-function FormActions({ onCancel }: { onCancel: () => void }) {
+function FormActions({ onCancel, disabled }: { onCancel: () => void; disabled?: boolean }) {
   return (
     <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-      <button type="submit" style={primaryBtn}><Save size={14} /> Save</button>
-      <button type="button" onClick={onCancel} style={ghostBtn}><X size={14} /> Cancel</button>
+      <button type="submit" style={disabled ? { ...primaryBtn, opacity: 0.5, cursor: "not-allowed" } : primaryBtn} disabled={disabled}><Save size={14} /> Save</button>
+      <button type="button" onClick={onCancel} style={ghostBtn} disabled={disabled}><X size={14} /> Cancel</button>
     </div>
   );
 }
 
-function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
+function RowActions({ onEdit, onDelete, onView }: { onEdit: () => void; onDelete: () => void; onView?: () => void }) {
   return (
     <div style={{ display: "flex", gap: 6 }}>
+      {onView && <button onClick={onView} style={iconBtn} title="View / Play"><Eye size={13} /></button>}
       <button onClick={onEdit} style={iconBtn} title="Edit"><Pencil size={13} /></button>
       <button onClick={onDelete} style={{ ...iconBtn, color: "#a5452f" }} title="Delete"><Trash2 size={13} /></button>
     </div>
@@ -538,7 +764,7 @@ function PreviewPage({ testimonials, videos, quote }: { testimonials: Testimonia
         <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 18 }}>
           {videos.map((video, i) => (
             <div key={video.id} style={{ background: "#000", borderRadius: 10, width: i === 1 ? 340 : 270, height: i === 1 ? 200 : 165, position: "relative", overflow: "hidden" }}>
-              {video.videoUrl ? <video src={video.videoUrl} muted controls style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><Play size={28} color="#555" /></div>}
+              {video.videoUrl ? <video src={getAssetUrl(video.videoUrl)} muted controls style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><Play size={28} color="#555" /></div>}
               <VolumeX size={16} color="#eee" style={{ position: "absolute", bottom: 8, right: 10 }} />
             </div>
           ))}
@@ -556,14 +782,20 @@ function PreviewPage({ testimonials, videos, quote }: { testimonials: Testimonia
             <p style={{ fontSize: 13, color: "#5a5744", fontStyle: "italic", lineHeight: 1.5, margin: "10px 0 14px" }}>"{testimonial.message}"</p>
             <div style={{ display: "flex", alignItems: "center", gap: 10, borderTop: "1px solid #f0ede0", paddingTop: 12 }}>
               <div style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", background: "#e7e3d5", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {testimonial.photo ? <img src={testimonial.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <ImageIcon size={14} color={MUTED} />}
+                {testimonial.photo ? <img src={getAssetUrl(testimonial.photo)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <ImageIcon size={14} color={MUTED} />}
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: INK }}>{testimonial.name}</div>
                 <div style={{ fontSize: 11.5, color: MUTED }}>{testimonial.location}</div>
               </div>
             </div>
-            {testimonial.tag && <div style={{ marginTop: 10 }}><span style={tagStyle}>{testimonial.tag}</span></div>}
+            {testimonial.tag && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 10 }}>
+                {testimonial.tag.split(",").map((t) => t.trim()).filter(Boolean).map((tag, idx) => (
+                  <span key={idx} style={tagStyle}>{tag}</span>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

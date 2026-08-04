@@ -608,6 +608,21 @@ import leftVideo from "../../assets/video 1.mp4";
 import rightVideo from "../../assets/video 2.mp4";
 import heroTestimonials from "../../assets/hero-testimonials.jpg";
 
+import testimonialApi from "../../api/testimonialApi";
+
+const IMG_BASE = import.meta.env.VITE_API_IMG_URL || "http://localhost:8080";
+
+function getAssetUrl(url: string) {
+  if (!url) return "";
+  if (url.startsWith("data:") || url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  if (url.startsWith("/")) {
+    return `${IMG_BASE}${url}`;
+  }
+  return `${IMG_BASE}/${url}`;
+}
+
 /* ================= TESTIMONIAL DATA ================= */
 const testimonials = [
   {
@@ -846,20 +861,23 @@ function TestimonialVideoCard({
   );
 }
 
-function HeroVideo() {
+function HeroVideo({ videos }: { videos: any[] }) {
   return (
     <section className="py-20 bg-white">
       <div className="container mx-auto px-6">
         <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.18fr)_minmax(0,0.95fr)]">
-          {testimonialVideos.map((video) => (
-            <div key={video.id} className={video.orderClassName}>
-              <TestimonialVideoCard
-                desktopSrc={video.desktopSrc}
-                mobileSrc={video.mobileSrc}
-                featured={video.featured}
-              />
-            </div>
-          ))}
+          {videos.map((video, idx) => {
+            const featured = idx === 1;
+            const orderClassName = idx === 0 ? "order-2 lg:order-1" : idx === 1 ? "order-1 lg:order-2" : "order-3";
+            return (
+              <div key={video.id || idx} className={orderClassName}>
+                <TestimonialVideoCard
+                  desktopSrc={getAssetUrl(video.videoUrl)}
+                  featured={featured}
+                />
+              </div>
+            );
+          })}
         </div>
 
         <div className="mt-10 text-center max-w-xl mx-auto">
@@ -876,6 +894,50 @@ function HeroVideo() {
 
 /* ================= PAGE ================= */
 const Testimonials = () => {
+  const [dynTestimonials, setDynTestimonials] = useState<any[]>([]);
+  const [dynVideos, setDynVideos] = useState<any[]>([]);
+  const [dynQuote, setDynQuote] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.allSettled([
+      testimonialApi.getTestimonials(),
+      testimonialApi.getVideoTestimonials(),
+      testimonialApi.getFeaturedQuote()
+    ]).then(([resTestimonials, resVideos, resQuote]) => {
+      if (resTestimonials.status === "fulfilled" && resTestimonials.value.length > 0) {
+        setDynTestimonials(resTestimonials.value);
+      } else {
+        setDynTestimonials(testimonials.map(t => ({
+          id: t.id,
+          name: t.name,
+          location: t.location,
+          rating: t.rating,
+          message: t.text,
+          photo: t.image,
+          tag: t.service
+        })));
+      }
+
+      if (resVideos.status === "fulfilled" && resVideos.value.length > 0) {
+        setDynVideos(resVideos.value);
+      } else {
+        setDynVideos(testimonialVideos.map((v, idx) => ({
+          id: v.id,
+          videoUrl: v.desktopSrc,
+          caption: idx === 0 ? "Behind the scenes at the atelier" : idx === 1 ? "Draping a bridal lehenga" : "Client fitting session"
+        })));
+      }
+
+      if (resQuote.status === "fulfilled" && resQuote.value) {
+        setDynQuote(resQuote.value);
+      } else {
+        setDynQuote("Styliste Couturier has transformed how I think about fashion. Every piece feels special.");
+      }
+      setLoading(false);
+    });
+  }, []);
+
   return (
     <main>
       <Navbar />
@@ -931,15 +993,14 @@ const Testimonials = () => {
       </section>
 
       {/* ================= VIDEO CARD ================= */}
-      <HeroVideo />
+      {!loading && dynVideos.length > 0 && <HeroVideo videos={dynVideos} />}
 
       {/* ================= FEATURED QUOTE ================= */}
       <section className="py-28 bg-primary text-primary-foreground">
         <div className="container mx-auto px-6 text-center max-w-4xl">
           <Quote className="w-16 h-16 mx-auto mb-8 opacity-30" />
           <p className="font-serif text-2xl md:text-4xl italic mb-8">
-            "Styliste Couturier has transformed how I think about fashion. Every piece feels
-            special."
+            "{dynQuote}"
           </p>
         </div>
       </section>
@@ -948,9 +1009,9 @@ const Testimonials = () => {
       <section className="py-20 bg-background text-foreground">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
+            {dynTestimonials.map((testimonial, index) => (
               <motion.div
-                key={testimonial.id}
+                key={testimonial.id || index}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -963,14 +1024,20 @@ const Testimonials = () => {
                   ))}
                 </div>
                 <p className="text-muted-foreground italic mb-6">
-                  "{testimonial.text}"
+                  "{testimonial.message}"
                 </p>
                 <div className="flex items-center gap-4">
-                  <img
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
+                  {testimonial.photo ? (
+                    <img
+                      src={getAssetUrl(testimonial.photo)}
+                      alt={testimonial.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-sage/10 flex items-center justify-center text-sage font-serif font-bold text-lg animate-pulse">
+                      {testimonial.name ? testimonial.name.charAt(0) : "T"}
+                    </div>
+                  )}
                   <div>
                     <div className="font-serif">
                       {testimonial.name}
@@ -980,11 +1047,15 @@ const Testimonials = () => {
                     </div>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-border">
-                  <span className="inline-block px-3 py-1 bg-sage/10 text-sage text-xs">
-                    {testimonial.service}
-                  </span>
-                </div>
+                {testimonial.tag && (
+                  <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-2">
+                    {testimonial.tag.split(",").map((t: string) => t.trim()).filter(Boolean).map((tag: string, idx: number) => (
+                      <span key={idx} className="inline-block px-3 py-1 bg-sage/10 text-sage text-xs rounded-full">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>

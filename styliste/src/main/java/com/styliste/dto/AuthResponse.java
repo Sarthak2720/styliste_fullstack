@@ -19,6 +19,7 @@ public class AuthResponse {
     private String name;
     private String role;
     private String message;
+    private String refreshToken;
 
     
 
@@ -50,6 +51,10 @@ public class AuthResponse {
         return this.message;
     }
 
+    public String getRefreshToken() {
+        return this.refreshToken;
+    }
+
     public void setToken(String token) {
         this.token = token;
     }
@@ -76,6 +81,10 @@ public class AuthResponse {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
     public boolean equals(Object o) {
@@ -121,7 +130,12 @@ public class AuthResponse {
         }
         String this$message = this.getMessage();
         String other$message = other.getMessage();
-        return !(this$message == null ? other$message != null : !this$message.equals(other$message));
+        if (this$message == null ? other$message != null : !this$message.equals(other$message)) {
+            return false;
+        }
+        String this$refreshToken = this.getRefreshToken();
+        String other$refreshToken = other.getRefreshToken();
+        return !(this$refreshToken == null ? other$refreshToken != null : !this$refreshToken.equals(other$refreshToken));
     }
 
     protected boolean canEqual(Object other) {
@@ -145,17 +159,19 @@ public class AuthResponse {
         result = result * 59 + ($role == null ? 43 : $role.hashCode());
         String $message = this.getMessage();
         result = result * 59 + ($message == null ? 43 : $message.hashCode());
+        String $refreshToken = this.getRefreshToken();
+        result = result * 59 + ($refreshToken == null ? 43 : $refreshToken.hashCode());
         return result;
     }
 
     public String toString() {
-        return "AuthResponse(token=" + this.getToken() + ", type=" + this.getType() + ", id=" + this.getId() + ", email=" + this.getEmail() + ", name=" + this.getName() + ", role=" + this.getRole() + ", message=" + this.getMessage() + ")";
+        return "AuthResponse(token=" + this.getToken() + ", type=" + this.getType() + ", id=" + this.getId() + ", email=" + this.getEmail() + ", name=" + this.getName() + ", role=" + this.getRole() + ", message=" + this.getMessage() + ", refreshToken=" + this.getRefreshToken() + ")";
     }
 
     public AuthResponse() {
     }
 
-    public AuthResponse(String token, String type, Long id, String email, String name, String role, String message) {
+    public AuthResponse(String token, String type, Long id, String email, String name, String role, String message, String refreshToken) {
         this.token = token;
         this.type = type;
         this.id = id;
@@ -163,6 +179,7 @@ public class AuthResponse {
         this.name = name;
         this.role = role;
         this.message = message;
+        this.refreshToken = refreshToken;
     }
 }
 

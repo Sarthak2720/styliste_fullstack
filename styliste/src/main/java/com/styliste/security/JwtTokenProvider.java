@@ -41,7 +41,7 @@ public class JwtTokenProvider {
     private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
     @Value(value="${jwt.secret}")
     private String jwtSecret;
-    @Value(value="${jwt.expiration}")
+    @Value(value="${jwt.expiration:900000}")
     private long jwtExpirationMs;
 
     private SecretKey getSigningKey() {
@@ -58,6 +58,11 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + this.jwtExpirationMs);
         return Jwts.builder().subject(username).issuedAt(now).expiration(expiryDate).signWith((Key)this.getSigningKey(), (SecureDigestAlgorithm)Jwts.SIG.HS512).compact();
+    }
+
+    public Date getExpirationDateFromToken(String token) {
+        Claims claims = Jwts.parser().verifyWith(this.getSigningKey()).build().parseSignedClaims(token).getPayload();
+        return claims.getExpiration();
     }
 
     public String getUsernameFromJwt(String token) {

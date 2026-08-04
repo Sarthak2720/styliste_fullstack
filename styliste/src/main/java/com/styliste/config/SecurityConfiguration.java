@@ -125,7 +125,8 @@ public class SecurityConfiguration {
 
                         // Public GET APIs
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**",
-                                "/api/appointments/types", "/api/appointments/available-slots").permitAll()
+                                "/api/appointments/types", "/api/appointments/available-slots",
+                                "/api/testimonials/**").permitAll()
 
                         // Public POST APIs
                         .requestMatchers(HttpMethod.POST, "/api/products/search").permitAll()
