@@ -397,17 +397,17 @@ function AdminPanel(props: {
   quoteDraft: string;
   setQuoteDraft: (value: string) => void;
   tForm: Testimonial | null;
-  setTForm: (value: Testimonial | null) => void;
+  setTForm: React.Dispatch<React.SetStateAction<Testimonial | null>>;
   vForm: VideoItem | null;
-  setVForm: (value: VideoItem | null) => void;
+  setVForm: React.Dispatch<React.SetStateAction<VideoItem | null>>;
   startAddTestimonial: () => void;
   startEditTestimonial: (item: Testimonial) => void;
   submitTestimonial: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
-  deleteTestimonial: (id: string) => Promise<void>;
+  deleteTestimonial: (id: string | number) => Promise<void>;
   startAddVideo: () => void;
   startEditVideo: (item: VideoItem) => void;
   submitVideo: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
-  deleteVideo: (id: string) => Promise<void>;
+  deleteVideo: (id: string | number) => Promise<void>;
   submitQuote: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   pingT: boolean;
   pingV: boolean;
@@ -579,7 +579,7 @@ function AdminPanel(props: {
                 <VolumeX size={14} color="#eee" style={{ position: "absolute", bottom: 6, right: 8 }} />
               </div>
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{video.caption || "Untitled clip"}</div>
-              <RowActions onView={video.videoUrl ? () => onViewVideo(video.videoUrl) : undefined} onEdit={() => startEditVideo(video)} onDelete={() => deleteVideo(video.id)} />
+              <RowActions onView={video.videoUrl ? () => onViewVideo(video.videoUrl) : undefined} onEdit={() => startEditVideo(video)} onDelete={() => deleteVideo(video.id!)} />
             </div>
           ))}
           {videos.length === 0 && <EmptyNote text="No videos yet — add one above." />}
@@ -680,7 +680,7 @@ function AdminPanel(props: {
                   ))}
                 </div>
               )}
-              <div style={{ marginTop: 8 }}><RowActions onEdit={() => startEditTestimonial(testimonial)} onDelete={() => deleteTestimonial(testimonial.id)} /></div>
+              <div style={{ marginTop: 8 }}><RowActions onEdit={() => startEditTestimonial(testimonial)} onDelete={() => deleteTestimonial(testimonial.id!)} /></div>
             </div>
           ))}
           {testimonials.length === 0 && <EmptyNote text="No testimonials yet — add one above." />}
