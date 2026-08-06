@@ -492,7 +492,7 @@ export default function AdminAboutUsManagement() {
   };
 
   // Helper to render form fields for a single block
-  const renderSingleBlockForm = (section?: AboutSection, isDynamic: boolean = false, dynamicTabId: string = "") => {
+  const renderSingleBlockForm = (section?: AboutSection, isDynamic: boolean = false) => {
     if (!section) return null;
 
     const isSaving = savingId === section.id;
@@ -973,7 +973,6 @@ export default function AdminAboutUsManagement() {
                     transition: "all 0.15s ease",
                   }}
                 >
-                  <span className="text-sm">{tab.icon}</span>
                   {tab.label}
                 </button>
               );
@@ -1100,7 +1099,7 @@ export default function AdminAboutUsManagement() {
                   <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 14, color: INK }}>
                     Custom Block Settings ({dt.section.layoutType})
                   </h3>
-                  {renderSingleBlockForm(dt.section, true, dt.id)}
+                  {renderSingleBlockForm(dt.section, true)}
                 </div>
               );
             })}

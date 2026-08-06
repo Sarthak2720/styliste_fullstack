@@ -27,6 +27,47 @@ public class AboutSectionService {
         if (aboutSectionRepository.count() == 0) {
             log.info("No about us sections found. Seeding default sections...");
             seedDefaultSections();
+        } else {
+            ensureConsecutiveGroups();
+        }
+    }
+
+    private void ensureConsecutiveGroups() {
+        try {
+            List<AboutSection> all = aboutSectionRepository.findAllByOrderBySortOrderAsc();
+            List<AboutSection> sorted = new ArrayList<>();
+            
+            List<AboutSection> heroes = all.stream().filter(s -> "HERO".equals(s.getLayoutType())).toList();
+            List<AboutSection> visions = all.stream().filter(s -> "VISION_GOAL".equals(s.getLayoutType())).toList();
+            List<AboutSection> storyRight = all.stream().filter(s -> "STORY_IMAGE_RIGHT".equals(s.getLayoutType())).toList();
+            List<AboutSection> team = all.stream().filter(s -> "TEAM_MEMBER".equals(s.getLayoutType())).toList();
+            List<AboutSection> services = all.stream().filter(s -> "SERVICE_CARD".equals(s.getLayoutType())).toList();
+            List<AboutSection> storyLeft = all.stream().filter(s -> "STORY_IMAGE_LEFT".equals(s.getLayoutType())).toList();
+            List<AboutSection> ctas = all.stream().filter(s -> "CTA".equals(s.getLayoutType())).toList();
+            List<AboutSection> others = all.stream().filter(s -> 
+                !List.of("HERO", "VISION_GOAL", "STORY_IMAGE_RIGHT", "TEAM_MEMBER", "SERVICE_CARD", "STORY_IMAGE_LEFT", "CTA")
+                .contains(s.getLayoutType())
+            ).toList();
+            
+            sorted.addAll(heroes);
+            sorted.addAll(visions);
+            sorted.addAll(storyRight);
+            sorted.addAll(team);
+            sorted.addAll(services);
+            sorted.addAll(storyLeft);
+            sorted.addAll(ctas);
+            sorted.addAll(others);
+            
+            for (int i = 0; i < sorted.size(); i++) {
+                AboutSection s = sorted.get(i);
+                if (s.getSortOrder() != i + 1) {
+                    s.setSortOrder(i + 1);
+                    aboutSectionRepository.save(s);
+                }
+            }
+            log.info("Successfully verified and aligned About Us sections consecutively.");
+        } catch (Exception e) {
+            log.error("Failed to align consecutive groups on startup", e);
         }
     }
 
@@ -40,14 +81,32 @@ public class AboutSectionService {
     }
 
     public AboutSection createSection(AboutSection section) {
-        if (section.getSortOrder() == null || section.getSortOrder() == 0) {
-            // Put it at the end
+        List<AboutSection> sameTypeSections = aboutSectionRepository.findAll().stream()
+                .filter(s -> s.getLayoutType().equals(section.getLayoutType()))
+                .sorted((a, b) -> Integer.compare(a.getSortOrder(), b.getSortOrder()))
+                .toList();
+
+        int targetOrder;
+        if (!sameTypeSections.isEmpty()) {
+            AboutSection lastOne = sameTypeSections.get(sameTypeSections.size() - 1);
+            targetOrder = lastOne.getSortOrder() + 1;
+            
+            List<AboutSection> allSections = aboutSectionRepository.findAll();
+            for (AboutSection s : allSections) {
+                if (s.getSortOrder() >= targetOrder) {
+                    s.setSortOrder(s.getSortOrder() + 1);
+                    aboutSectionRepository.save(s);
+                }
+            }
+        } else {
             int maxOrder = aboutSectionRepository.findAll().stream()
                     .mapToInt(AboutSection::getSortOrder)
                     .max()
                     .orElse(0);
-            section.setSortOrder(maxOrder + 1);
+            targetOrder = maxOrder + 1;
         }
+
+        section.setSortOrder(targetOrder);
         return aboutSectionRepository.save(section);
     }
 
