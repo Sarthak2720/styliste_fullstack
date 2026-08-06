@@ -70,7 +70,6 @@ const ADDABLE_PAGE_LAYOUTS = [
   { id: "HERO", name: "Hero Banner", desc: "Top header with background image." },
   { id: "STORY_IMAGE_LEFT", name: "Story (Image Left)", desc: "Two column text block with image on the left." },
   { id: "STORY_IMAGE_RIGHT", name: "Story (Image Right)", desc: "Two column text block with image on the right." },
-  { id: "CTA", name: "Call to Action Banner", desc: "Dark background consultation banner with buttons." },
   { id: "TEXT_ONLY", name: "Plain Text Block", desc: "Narrative paragraph block." },
 ];
 
@@ -338,7 +337,7 @@ export default function AdminAboutUsManagement() {
     const groups: { type: string; items: AboutSection[] }[] = [];
     const groupableTypes = ["VISION_GOAL", "TEAM_MEMBER", "SERVICE_CARD"];
 
-    sections.forEach((section) => {
+    sections.filter(s => s.layoutType !== "CTA").forEach((section) => {
       const lastGroup = groups[groups.length - 1];
       if (
         lastGroup &&
@@ -442,7 +441,7 @@ export default function AdminAboutUsManagement() {
                 {items.map((item, itemIdx) => (
                   <div key={`prev-team-${itemIdx}`} className="text-center group border border-gray-100 p-4 rounded-lg">
                     <div className="aspect-[3/4] rounded-lg overflow-hidden mb-4 bg-gray-100">
-                      <img src={getAssetUrl(item.imageUrl)} alt={item.title} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300" />
+                      <img src={getAssetUrl(item.imageUrl)} alt={item.title} className="w-full h-full object-cover transition-all duration-300" />
                     </div>
                     <h4 className="font-serif text-lg font-bold">{item.title}</h4>
                     <p className="text-xs uppercase tracking-wider text-[#5E6E54] mb-2">{item.subtitle}</p>
@@ -477,22 +476,7 @@ export default function AdminAboutUsManagement() {
             </div>
           );
 
-        case "CTA":
-          const cta = items[0];
-          return (
-            <div key={`prev-${idx}`} className="py-12 bg-[#5E6E54] text-white rounded-lg p-8 mb-8 text-center">
-              <h2 className="font-serif text-2xl md:text-4xl font-bold mb-4">{cta.title}</h2>
-              <p className="text-sm md:text-base text-gray-100 max-w-xl mx-auto mb-6">{cta.content}</p>
-              <div className="flex justify-center gap-4">
-                <button className="px-6 py-2 bg-white text-[#5E6E54] rounded-md font-semibold text-sm hover:bg-gray-100">
-                  Book Appointment
-                </button>
-                <button className="px-6 py-2 border border-white/40 text-white rounded-md font-semibold text-sm hover:bg-white/10">
-                  Contact Us
-                </button>
-              </div>
-            </div>
-          );
+
 
         default:
           const textBlock = items[0];
@@ -884,7 +868,6 @@ export default function AdminAboutUsManagement() {
     { id: "team", label: "Our Experts (Team)" },
     { id: "services", label: "What We Offer" },
     { id: "promise", label: "Our Promise"},
-    { id: "cta", label: "CTA Banner"},
   ];
 
   return (
@@ -935,6 +918,32 @@ export default function AdminAboutUsManagement() {
           
           {/* Tab Button Panel */}
           <div className="space-y-1.5">
+            <button
+              onClick={() => {
+                setActiveTab("preview");
+                setOpenListIdx(null);
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                width: "100%",
+                textAlign: "left",
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: `1px solid ${activeTab === "preview" ? OLIVE_DARK : "#eae5d8"}`,
+                background: activeTab === "preview" ? OLIVE_DARK : "#fff",
+                color: activeTab === "preview" ? "#fff" : INK,
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: "pointer",
+                marginBottom: 16,
+              }}
+            >
+              <span></span>
+              Live Layout Preview
+            </button>
+
             <span style={{ display: "block", fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: MUTED, letterSpacing: 0.6, paddingLeft: 8, marginBottom: 8 }}>
               Standard Sections
             </span>
@@ -1033,32 +1042,7 @@ export default function AdminAboutUsManagement() {
               <Plus size={14} /> Add New Page Section
             </button>
 
-            {/* Preview link */}
-            <div style={{ height: 16 }} />
-            <button
-              onClick={() => {
-                setActiveTab("preview");
-                setOpenListIdx(null);
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                width: "100%",
-                textAlign: "left",
-                padding: "10px 14px",
-                borderRadius: 8,
-                border: `1px solid ${activeTab === "preview" ? OLIVE_DARK : "#eae5d8"}`,
-                background: activeTab === "preview" ? OLIVE_DARK : "#fff",
-                color: activeTab === "preview" ? "#fff" : INK,
-                fontWeight: 600,
-                fontSize: 12.5,
-                cursor: "pointer",
-              }}
-            >
-              <span></span>
-              Live Layout Preview
-            </button>
+            {/* Preview link removed from bottom */}
           </div>
 
           {/* Configuration Form Workspace Panel */}
@@ -1106,12 +1090,7 @@ export default function AdminAboutUsManagement() {
               </div>
             )}
 
-            {activeTab === "cta" && (
-              <div>
-                <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 14, color: INK }}>CTA Call to Action</h3>
-                {renderSingleBlockForm(firstCta)}
-              </div>
-            )}
+
 
             {/* Render any dynamic tabs content workspace */}
             {dynamicTabs.map((dt) => {
@@ -1133,7 +1112,23 @@ export default function AdminAboutUsManagement() {
                   {sections.length === 0 ? (
                     <div style={{ fontSize: 13, fontStyle: "italic", color: MUTED }}>No dynamic content sections found.</div>
                   ) : (
-                    renderPreviewGroups()
+                    <>
+                      {renderPreviewGroups()}
+                      <div className="py-12 bg-[#5E6E54] text-white rounded-lg p-8 mb-8 text-center mt-8">
+                        <h2 className="font-serif text-2xl md:text-4xl font-bold mb-4">Experience Styliste Couturier</h2>
+                        <p className="text-sm md:text-base text-gray-100 max-w-xl mx-auto mb-6">
+                          Visit our boutique or book a doorstep consultation with one of our expert designers.
+                        </p>
+                        <div className="flex justify-center gap-4">
+                          <button className="px-6 py-2 bg-white text-[#5E6E54] rounded-md font-semibold text-sm">
+                            Book Appointment
+                          </button>
+                          <button className="px-6 py-2 border border-white/40 text-white rounded-md font-semibold text-sm">
+                            Contact Us
+                          </button>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

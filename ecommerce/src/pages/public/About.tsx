@@ -712,7 +712,7 @@ const About = () => {
     const groups: Group[] = [];
     const groupableTypes = ["VISION_GOAL", "TEAM_MEMBER", "SERVICE_CARD"];
 
-    sections.forEach((section) => {
+    sections.filter(s => s.layoutType !== "CTA").forEach((section) => {
       const lastGroup = groups[groups.length - 1];
       if (
         lastGroup &&
@@ -961,7 +961,7 @@ const About = () => {
                         <img
                           src={getAssetUrl(member.imageUrl)}
                           alt={member.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale hover:grayscale-0"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       </div>
@@ -1041,60 +1041,7 @@ const About = () => {
             </section>
           );
 
-        case "CTA":
-          const cta = items[0];
-          return (
-            <section key={`sec-${idx}`} className="py-28 md:py-40 bg-primary text-primary-foreground border-t border-primary-foreground/10">
-              <div className="container mx-auto px-6 text-center">
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="font-serif text-4xl md:text-6xl mb-8"
-                >
-                  {cta.title}
-                </motion.h2>
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 }}
-                  className="text-primary-foreground/80 max-w-xl mx-auto mb-12 leading-relaxed"
-                >
-                  {cta.content}
-                </motion.p>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.2 }}
-                  className="flex flex-col sm:flex-row gap-4 justify-center"
-                >
-                  <Link
-                    to="/appointment"
-                    className="group inline-flex items-center gap-2
-                   px-8 py-4 rounded-xl
-                   bg-background text-foreground
-                   font-medium transition-all
-                   hover:bg-background/90"
-                  >
-                    Book Appointment
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                  <Link
-                    to="/contact"
-                    className="inline-flex items-center justify-center
-                   px-8 py-4 rounded-xl
-                   border border-primary-foreground/40
-                   text-primary-foreground
-                   transition hover:bg-primary-foreground/10"
-                  >
-                    Contact Us
-                  </Link>
-                </motion.div>
-              </div>
-            </section>
-          );
+
 
         default:
           const textBlock = items[0];
@@ -1142,6 +1089,57 @@ const About = () => {
           ) : (
             renderGroups()
           )}
+          <section className="py-28 md:py-40 bg-primary text-primary-foreground text-center">
+            <div className="container mx-auto px-6">
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="font-serif text-4xl md:text-6xl mb-8"
+              >
+                Experience Styliste Couturier
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-primary-foreground/80 max-w-xl mx-auto mb-12 leading-relaxed"
+              >
+                Visit our boutique or book a doorstep consultation with one of our
+                expert designers.
+              </motion.p>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="flex flex-col sm:flex-row gap-4 justify-center"
+              >
+                <Link
+                  to="/appointment"
+                  className="group inline-flex items-center gap-2
+                 px-8 py-4 rounded-xl
+                 bg-background text-foreground
+                 font-medium transition-all
+                 hover:bg-background/90"
+                >
+                  Book Appointment
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center justify-center
+                 px-8 py-4 rounded-xl
+                 border border-primary-foreground/40
+                 text-primary-foreground
+                 transition hover:bg-primary-foreground/10"
+                >
+                  Contact Us
+                </Link>
+              </motion.div>
+            </div>
+          </section>
           <Footer />
         </>
       )}
