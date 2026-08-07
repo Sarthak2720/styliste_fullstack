@@ -626,7 +626,7 @@
 
 // export default About;
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, createElement } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -648,6 +648,59 @@ import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 import heroAbout from "../../assets/hero-about.jpg";
 import aboutUsApi, { type AboutSection } from "../../api/aboutUsApi";
+import DOMPurify from "dompurify";
+import { cssSizeToPx, normalizeIconId, renderIconById } from "../../components/admin/iconHub";
+import "../../components/admin/rich-text.css";
+
+function sanitize(html: string) {
+  return DOMPurify.sanitize(html || "", {
+    ADD_ATTR: ["data-icon", "data-icon-size", "data-icon-color", "contenteditable", "style"],
+  });
+}
+
+function RichHtml({ html, style, className }: { html: string; style?: React.CSSProperties; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const resolveIcons = () => {
+    if (!ref.current) return;
+    ref.current.querySelectorAll("[data-icon]").forEach((elNode) => {
+      const el = elNode as HTMLElement;
+      const raw = el.getAttribute("data-icon");
+      const iconId = normalizeIconId(raw);
+      if (iconId && !el.dataset.resolved) {
+        el.dataset.resolved = "1";
+        const size = el.getAttribute("data-icon-size") || "1em";
+        const color = el.getAttribute("data-icon-color") || "#5c6a42";
+        const sizePx = cssSizeToPx(size, 16);
+        el.innerHTML = "";
+        el.style.display = "inline-flex";
+        el.style.verticalAlign = "middle";
+        el.style.width = size;
+        el.style.height = size;
+        el.style.color = color;
+        const w = document.createElement("span");
+        w.style.display = "inline-flex";
+        w.style.width = "100%";
+        w.style.height = "100%";
+        w.style.alignItems = "center";
+        w.style.justifyContent = "center";
+        el.appendChild(w);
+        import("react-dom/client").then(({ createRoot }) => {
+          const node = renderIconById(iconId, { sizePx, color: "currentColor" }) || createElement("span", null, "⬡");
+          createRoot(w).render(node);
+        });
+      }
+    });
+  };
+  return (
+    <div
+      ref={(node) => { ref.current = node; setTimeout(resolveIcons, 0); }}
+      className={`${className || ""} rich-text-content`}
+      style={style}
+      dangerouslySetInnerHTML={{ __html: sanitize(html) }}
+    />
+  );
+}
+
 
 const IMG_BASE = import.meta.env.VITE_API_IMG_URL || "http://localhost:8080";
 
@@ -769,14 +822,14 @@ const About = () => {
                       </React.Fragment>
                     ))}
                   </motion.h1>
-                  <motion.p
+                  <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                     className="text-primary-foreground/80 text-lg leading-relaxed mb-8"
                   >
-                    {hero.content}
-                  </motion.p>
+                    <RichHtml html={hero.content || ""} />
+                  </motion.div>
                 </div>
               </div>
             </section>
@@ -813,9 +866,7 @@ const About = () => {
                         <h2 className="font-serif text-3xl md:text-4xl mb-6">
                           {item.title}
                         </h2>
-                        <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
-                          {item.content}
-                        </p>
+                        <RichHtml html={item.content || ""} className="text-muted-foreground leading-relaxed text-sm md:text-base" />
                       </motion.div>
                     );
                   })}
@@ -844,9 +895,9 @@ const About = () => {
                     <h2 className="font-serif text-4xl md:text-5xl mb-8 text-primary-foreground">
                       {storyR.title}
                     </h2>
-                    <div 
+                    <RichHtml
                       className="text-primary-foreground/80 mb-6 leading-relaxed text-sm md:text-base space-y-4"
-                      dangerouslySetInnerHTML={{ __html: storyR.content || "" }}
+                      html={storyR.content || ""}
                     />
                   </motion.div>
                   <motion.div
@@ -899,9 +950,9 @@ const About = () => {
                     <h2 className="font-serif text-4xl md:text-5xl mb-8">
                       {storyL.title}
                     </h2>
-                    <div 
+                    <RichHtml
                       className="text-muted-foreground mb-6 leading-relaxed text-sm md:text-base space-y-4"
-                      dangerouslySetInnerHTML={{ __html: storyL.content || "" }}
+                      html={storyL.content || ""}
                     />
                   </motion.div>
                 </div>
@@ -971,9 +1022,7 @@ const About = () => {
                       <p className="text-sage text-sm font-sans tracking-wide uppercase mb-3">
                         {member.subtitle}
                       </p>
-                      <p className="text-muted-foreground text-sm leading-relaxed">
-                        {member.content}
-                      </p>
+                      <RichHtml html={member.content || ""} className="text-muted-foreground text-sm leading-relaxed" />
                     </motion.div>
                   ))}
                 </div>
@@ -1030,9 +1079,7 @@ const About = () => {
                         <h3 className="font-serif text-xl mb-4 text-primary-foreground group-hover:text-accent transition-colors duration-300">
                           {service.title}
                         </h3>
-                        <p className="text-primary-foreground/70 text-sm leading-relaxed">
-                          {service.content}
-                        </p>
+                        <RichHtml html={service.content || ""} className="text-primary-foreground/70 text-sm leading-relaxed" />
                       </motion.div>
                     );
                   })}
@@ -1052,7 +1099,7 @@ const About = () => {
                 {textBlock.subtitle && (
                   <h4 className="text-xs uppercase text-sage font-sans tracking-widest mb-4">{textBlock.subtitle}</h4>
                 )}
-                <p className="text-muted-foreground leading-relaxed text-base">{textBlock.content}</p>
+                <RichHtml html={textBlock.content || ""} className="text-muted-foreground leading-relaxed text-base" />
               </div>
             </section>
           );

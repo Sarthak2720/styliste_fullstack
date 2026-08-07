@@ -132,6 +132,7 @@ import {
   FiInfo,
 } from "react-icons/fi";
 import useAuth from "../../hooks/useAuth";
+import { logout } from "../../store/slices/authSlice";
 import logo from "../../assets/logo.png";
 
 // Add your logo import - replace with your actual logo
@@ -170,11 +171,7 @@ const AdminLayout = () => {
   };
 
   const handleLogout = () => {
-    dispatch({ type: "LOGOUT" });
-
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    dispatch(logout() as any);
 
     navigate("/login", {
       replace: true,

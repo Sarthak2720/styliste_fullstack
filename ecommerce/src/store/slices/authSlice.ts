@@ -193,10 +193,10 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('authToken'),
+  token: null,
   isAuthenticated: false,
-  isLoading: true,        // 🔧 CHANGE: MUST start as true
-  isHydrated: false,      // ✅ already correct
+  isLoading: true,
+  isHydrated: false,
   error: null,
 };
 
@@ -209,14 +209,6 @@ export const login = createAsyncThunk<AuthResponse, LoginRequest, { rejectValue:
       const response = await authApi.login(credentials);
 
       console.log("[Thunk] 2. API Success!", response);
-
-      if (!response.token) {
-        console.error("[Thunk] ❌ RESPONSE HAS NO TOKEN!", response);
-        throw new Error("Server response missing token");
-      }
-
-      localStorage.setItem('authToken', response.token);
-      console.log("[Thunk] 3. Token Saved:", localStorage.getItem('authToken'));
 
       localStorage.setItem('user', JSON.stringify({
         id: response.id,
@@ -239,7 +231,6 @@ export const signup = createAsyncThunk<AuthResponse, SignUpRequest, { rejectValu
     try {
       const response = await authApi.signup(userData);
 
-      localStorage.setItem('authToken', response.token);
       localStorage.setItem('user', JSON.stringify({
         id: response.id,
         name: response.name,
@@ -260,11 +251,6 @@ export const googleLogin = createAsyncThunk<AuthResponse, GoogleAuthRequest, { r
     try {
       const response = await authApi.googleLogin(payload);
 
-      if (!response.token) {
-        throw new Error('Server response missing token');
-      }
-
-      localStorage.setItem('authToken', response.token);
       localStorage.setItem('user', JSON.stringify({
         id: response.id,
         name: response.name,
@@ -285,8 +271,7 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   } catch (error) {
     console.error('Logout API call failed', error);
   } finally {
-    // 🔥 Clear auth storage
-    localStorage.removeItem('authToken');
+    // 🔥 Clear auth storage (token is in secure cookie, cleared by server)
     localStorage.removeItem('user');
 
     // 🔥 Clear cart storage
@@ -315,11 +300,9 @@ const authSlice = createSlice({
     },
 
     loadUserFromStorage: (state) => {
-      const token = localStorage.getItem('authToken');
       const userStr = localStorage.getItem('user');
 
-      if (token && userStr) {
-        state.token = token;
+      if (userStr) {
         state.user = JSON.parse(userStr);
         state.isAuthenticated = true;
       } else {

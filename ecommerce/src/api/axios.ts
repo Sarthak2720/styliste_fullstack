@@ -3,42 +3,35 @@ import type { ApiError } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://192.168.1.115:8080/api';
 
+// Queue to handle multiple concurrent requests when token is refreshing
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  failedQueue = [];
+};
+
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
+  withCredentials: true, // Send secure cookies automatically
   headers: {
-    // "Content-Type": "application/json",
-    
-    // 👇 THIS HEADER IS THE KEY FIX
     "ngrok-skip-browser-warning": "true",
   },
 });
 
-// Request interceptor - Attach JWT token to every request
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // 1. Get token
-    const token = localStorage.getItem('authToken');
-    
-    // DEBUG LOGS (Check your Browser Console for these!)
     console.log(`[Interceptor] Preparing ${config.method?.toUpperCase()} ${config.url}`);
-    console.log(`[Interceptor] Token in Storage:`, token ? "YES (Found)" : "NO (Null/Empty)");
-
-    // 2. Attach Token
-    if (token) {
-        // Ensure headers object exists
-        if (!config.headers) {
-            config.headers = new axios.AxiosHeaders();
-        }
-        
-        config.headers.Authorization = `Bearer ${token}`;
-        console.log(`[Interceptor] Header Attached: Bearer ${token.substring(0, 10)}...`);
-    } else {
-        console.warn(`[Interceptor] ⚠️ Sending request WITHOUT token!`);
-    }
-    
     return config;
   },
   (error: AxiosError) => {
@@ -46,7 +39,7 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors globally
+// Response interceptor - Handle errors globally & automatically refresh token
 axiosInstance.interceptors.response.use(
   (response) => {
     console.log(`[API Response] ${response.status} ${response.config.url}`);
@@ -54,20 +47,74 @@ axiosInstance.interceptors.response.use(
   },
   (error: AxiosError<ApiError>) => {
     if (error.response) {
-      const { status, data } = error.response;
+      const { status, data, config } = error.response;
       
       console.error(`[API Error] ${status}`, data);
       
-      // Handle 401 Unauthorized - Token expired or invalid → auto logout & redirect
-      if (status === 401) {
-        console.warn("[API] 401 Unauthorized - token expired or invalid, logging out");
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('token');
+      // 1. If refresh call itself fails with 401, force logout immediately to prevent loop
+      if (status === 401 && config.url?.includes('/auth/refresh')) {
+        console.warn("[API] 401 Unauthorized during refresh - logging out user");
         localStorage.removeItem('user');
+        localStorage.removeItem('cart');
+        localStorage.removeItem('styliste_cart');
         const path = window.location.pathname || '';
         const isAuthPage = path === '/login' || path === '/signup' || path === '/forgot-password';
         if (!isAuthPage) {
           window.location.replace('/login?expired=1');
+        }
+        return Promise.reject(data);
+      }
+
+      // 2. Handle 401 Unauthorized - Attempt access token refresh
+      if (status === 401) {
+        const originalRequest = config as any;
+        
+        // Prevent infinite loops if retry flag is already set
+        if (!originalRequest._retry) {
+          originalRequest._retry = true;
+          
+          if (isRefreshing) {
+            return new Promise((resolve, reject) => {
+              failedQueue.push({ resolve, reject });
+            })
+              .then(() => {
+                return axiosInstance(originalRequest);
+              })
+              .catch((err) => {
+                return Promise.reject(err);
+              });
+          }
+          
+          isRefreshing = true;
+          console.log("[API] Access token expired. Initiating background refresh...");
+          
+          return new Promise((resolve, reject) => {
+            axiosInstance.post('/auth/refresh')
+              .then(() => {
+                console.log("[API] Token refreshed successfully. Retrying original request.");
+                processQueue(null);
+                resolve(axiosInstance(originalRequest));
+              })
+              .catch((err) => {
+                console.error("[API] Token refresh failed:", err);
+                processQueue(err);
+                
+                // Clear state on failure and redirect
+                localStorage.removeItem('user');
+                localStorage.removeItem('cart');
+                localStorage.removeItem('styliste_cart');
+                
+                const path = window.location.pathname || '';
+                const isAuthPage = path === '/login' || path === '/signup' || path === '/forgot-password';
+                if (!isAuthPage) {
+                  window.location.replace('/login?expired=1');
+                }
+                reject(err);
+              })
+              .finally(() => {
+                isRefreshing = false;
+              });
+          });
         }
       }
 

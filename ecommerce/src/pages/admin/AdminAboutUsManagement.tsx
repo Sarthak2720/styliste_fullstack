@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, createElement } from "react";
 import {
   Eye,
   Target,
@@ -20,6 +20,60 @@ import {
   X,
 } from "lucide-react";
 import aboutUsApi, { type AboutSection } from "../../api/aboutUsApi";
+import RichTextField from "../../components/admin/RichTextField";
+import DOMPurify from "dompurify";
+import { cssSizeToPx, normalizeIconId, renderIconById } from "../../components/admin/iconHub";
+import "../../components/admin/rich-text.css";
+
+function sanitize(html: string) {
+  return DOMPurify.sanitize(html || "", {
+    ADD_ATTR: ["data-icon", "data-icon-size", "data-icon-color", "contenteditable", "style"],
+  });
+}
+
+function RichHtml({ html, style, className }: { html: string; style?: React.CSSProperties; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const resolveIcons = () => {
+    if (!ref.current) return;
+    ref.current.querySelectorAll("[data-icon]").forEach((elNode) => {
+      const el = elNode as HTMLElement;
+      const raw = el.getAttribute("data-icon");
+      const iconId = normalizeIconId(raw);
+      if (iconId && !el.dataset.resolved) {
+        el.dataset.resolved = "1";
+        const size = el.getAttribute("data-icon-size") || "1em";
+        const color = el.getAttribute("data-icon-color") || "#5c6a42";
+        const sizePx = cssSizeToPx(size, 16);
+        el.innerHTML = "";
+        el.style.display = "inline-flex";
+        el.style.verticalAlign = "middle";
+        el.style.width = size;
+        el.style.height = size;
+        el.style.color = color;
+        const w = document.createElement("span");
+        w.style.display = "inline-flex";
+        w.style.width = "100%";
+        w.style.height = "100%";
+        w.style.alignItems = "center";
+        w.style.justifyContent = "center";
+        el.appendChild(w);
+        import("react-dom/client").then(({ createRoot }) => {
+          const node = renderIconById(iconId, { sizePx, color: "currentColor" }) || createElement("span", null, "⬡");
+          createRoot(w).render(node);
+        });
+      }
+    });
+  };
+  return (
+    <div
+      ref={(node) => { ref.current = node; setTimeout(resolveIcons, 0); }}
+      className={`${className || ""} rich-text-content`}
+      style={style}
+      dangerouslySetInnerHTML={{ __html: sanitize(html) }}
+    />
+  );
+}
+
 
 const OLIVE_DARK = "#5c6a42";
 const CREAM = "#fbfaf6";
@@ -355,8 +409,7 @@ export default function AdminAboutUsManagement() {
 
     return groups.map((group, idx) => {
       const { type, items } = group;
-      
-      switch (type) {
+           switch (type) {
         case "HERO":
           const hero = items[0];
           return (
@@ -374,7 +427,7 @@ export default function AdminAboutUsManagement() {
               <div className="relative z-10 max-w-2xl mx-auto text-center px-4">
                 <span className="text-xs uppercase tracking-widest text-gray-200 block mb-2">{hero.subtitle || "About Us"}</span>
                 <h1 className="font-serif text-3xl md:text-5xl font-bold mb-4">{hero.title}</h1>
-                <p className="text-sm md:text-base text-gray-100">{hero.content}</p>
+                <RichHtml html={hero.content || ""} className="text-sm md:text-base text-gray-100" />
               </div>
             </div>
           );
@@ -392,7 +445,7 @@ export default function AdminAboutUsManagement() {
                       </div>
                       <span className="text-xs uppercase tracking-wider text-[#5E6E54] font-semibold">{item.subtitle}</span>
                       <h3 className="font-serif text-xl font-semibold mt-1 mb-3">{item.title}</h3>
-                      <p className="text-sm text-gray-600 leading-relaxed">{item.content}</p>
+                      <RichHtml html={item.content || ""} className="text-sm text-gray-600 leading-relaxed" />
                     </div>
                   );
                 })}
@@ -407,7 +460,7 @@ export default function AdminAboutUsManagement() {
               <div>
                 <span className="text-xs uppercase tracking-wider text-[#5E6E54] font-semibold block mb-2">{storyR.subtitle}</span>
                 <h2 className="font-serif text-2xl md:text-3xl font-bold mb-4">{storyR.title}</h2>
-                <div className="text-sm text-gray-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: storyR.content || "" }} />
+                <RichHtml html={storyR.content || ""} className="text-sm text-gray-600 leading-relaxed" />
               </div>
               <div className="aspect-[4/3] rounded-lg overflow-hidden border border-gray-200">
                 <img src={getAssetUrl(storyR.imageUrl)} alt={storyR.title} className="w-full h-full object-cover" />
@@ -425,7 +478,7 @@ export default function AdminAboutUsManagement() {
               <div className="order-1 md:order-2">
                 <span className="text-xs uppercase tracking-wider text-[#5E6E54] font-semibold block mb-2">{storyL.subtitle}</span>
                 <h2 className="font-serif text-2xl md:text-3xl font-bold mb-4">{storyL.title}</h2>
-                <div className="text-sm text-gray-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: storyL.content || "" }} />
+                <RichHtml html={storyL.content || ""} className="text-sm text-gray-600 leading-relaxed" />
               </div>
             </div>
           );
@@ -445,7 +498,7 @@ export default function AdminAboutUsManagement() {
                     </div>
                     <h4 className="font-serif text-lg font-bold">{item.title}</h4>
                     <p className="text-xs uppercase tracking-wider text-[#5E6E54] mb-2">{item.subtitle}</p>
-                    <p className="text-xs text-gray-600 line-clamp-3">{item.content}</p>
+                    <RichHtml html={item.content || ""} className="text-xs text-gray-600 line-clamp-3" />
                   </div>
                 ))}
               </div>
@@ -468,7 +521,7 @@ export default function AdminAboutUsManagement() {
                         <IconComponent className="w-6 h-6 text-[#5E6E54]" />
                       </div>
                       <h4 className="font-serif text-lg font-bold mb-2">{item.title}</h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">{item.content}</p>
+                      <RichHtml html={item.content || ""} className="text-xs text-gray-600 leading-relaxed" />
                     </div>
                   );
                 })}
@@ -476,15 +529,13 @@ export default function AdminAboutUsManagement() {
             </div>
           );
 
-
-
         default:
           const textBlock = items[0];
           return (
             <div key={`prev-${idx}`} className="py-8 border-b border-gray-100 mb-8 max-w-2xl mx-auto">
               <h3 className="font-serif text-xl font-bold mb-2">{textBlock.title}</h3>
               {textBlock.subtitle && <h5 className="text-xs uppercase text-gray-500 mb-2">{textBlock.subtitle}</h5>}
-              <p className="text-sm text-gray-600 leading-relaxed">{textBlock.content}</p>
+              <RichHtml html={textBlock.content || ""} className="text-sm text-gray-600 leading-relaxed" />
             </div>
           );
       }
@@ -542,14 +593,13 @@ export default function AdminAboutUsManagement() {
 
         <div>
           <label style={{ display: "block", fontSize: 11, color: MUTED, marginBottom: 4 }}>
-            Description / Content Text (HTML allowed)
+            Description / Content Text (Rich Text Editor)
           </label>
-          <textarea
+          <RichTextField
             value={section.content || ""}
-            onChange={(e) => handleUpdateField(section.id!, { content: e.target.value })}
-            rows={5}
-            style={{ border: "1px solid #ddd8c8", borderRadius: 7, padding: "8px 10px", fontSize: 13, width: "100%", boxSizing: "border-box", fontFamily: "system-ui, sans-serif" }}
+            onChange={(val) => handleUpdateField(section.id!, { content: val })}
             placeholder="Main description"
+            minHeight={150}
           />
         </div>
 
@@ -724,7 +774,7 @@ export default function AdminAboutUsManagement() {
                   {/* Collapsible item body */}
                   {isOpen && (
                     <div className="p-5 bg-white border-t border-gray-100 space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className={layoutType === "SERVICE_CARD" ? "grid grid-cols-1" : "grid grid-cols-1 md:grid-cols-2 gap-4"}>
                         <div>
                           <label style={{ display: "block", fontSize: 11, color: MUTED, marginBottom: 4 }}>
                             Heading Title
@@ -734,33 +784,34 @@ export default function AdminAboutUsManagement() {
                             value={item.title}
                             onChange={(e) => handleUpdateField(item.id!, { title: e.target.value })}
                             style={{ border: "1px solid #ddd8c8", borderRadius: 7, padding: "8px 10px", fontSize: 13, width: "100%", boxSizing: "border-box" }}
-                            placeholder="Name / Title"
+                            placeholder={layoutType === "SERVICE_CARD" ? "Service Title" : "Name / Title"}
                           />
                         </div>
-                        <div>
-                          <label style={{ display: "block", fontSize: 11, color: MUTED, marginBottom: 4 }}>
-                            Subtitle / Label
-                          </label>
-                          <input
-                            type="text"
-                            value={item.subtitle || ""}
-                            onChange={(e) => handleUpdateField(item.id!, { subtitle: e.target.value })}
-                            style={{ border: "1px solid #ddd8c8", borderRadius: 7, padding: "8px 10px", fontSize: 13, width: "100%", boxSizing: "border-box" }}
-                            placeholder="Role / Tagline"
-                          />
-                        </div>
+                        {layoutType !== "SERVICE_CARD" && (
+                          <div>
+                            <label style={{ display: "block", fontSize: 11, color: MUTED, marginBottom: 4 }}>
+                              Subtitle / Label
+                            </label>
+                            <input
+                              type="text"
+                              value={item.subtitle || ""}
+                              onChange={(e) => handleUpdateField(item.id!, { subtitle: e.target.value })}
+                              style={{ border: "1px solid #ddd8c8", borderRadius: 7, padding: "8px 10px", fontSize: 13, width: "100%", boxSizing: "border-box" }}
+                              placeholder="Role / Tagline"
+                            />
+                          </div>
+                        )}
                       </div>
 
                       <div>
                         <label style={{ display: "block", fontSize: 11, color: MUTED, marginBottom: 4 }}>
-                          Description Content
+                          Description Content (Rich Text Editor)
                         </label>
-                        <textarea
+                        <RichTextField
                           value={item.content || ""}
-                          onChange={(e) => handleUpdateField(item.id!, { content: e.target.value })}
-                          rows={3}
-                          style={{ border: "1px solid #ddd8c8", borderRadius: 7, padding: "8px 10px", fontSize: 13, width: "100%", boxSizing: "border-box", fontFamily: "system-ui, sans-serif" }}
+                          onChange={(val) => handleUpdateField(item.id!, { content: val })}
                           placeholder="Description details..."
+                          minHeight={100}
                         />
                       </div>
 

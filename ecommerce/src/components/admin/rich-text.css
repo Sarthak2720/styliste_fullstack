@@ -88,3 +88,33 @@
 .ProseMirror:focus {
   outline: none !important;
 }
+
+/* Styles for rendered rich text content on public pages and previews */
+.rich-text-content strong,
+.rich-text-content b {
+  font-weight: bold !important;
+}
+
+.rich-text-content ul {
+  list-style-type: disc !important;
+  padding-left: 1.5em !important;
+  margin: 0.5em 0 !important;
+}
+
+.rich-text-content ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
+  margin: 0.5em 0 !important;
+}
+
+.rich-text-content li {
+  margin-bottom: 0.25em !important;
+}
+
+.rich-text-content blockquote {
+  border-left: 3px solid #5c6a42 !important;
+  padding-left: 1em !important;
+  margin: 0.5em 0 !important;
+  font-style: italic !important;
+}
+

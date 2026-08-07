@@ -76,8 +76,12 @@ extends OncePerRequestFilter {
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
+        String token = CookieHelper.getCookieValue(request, "accessToken");
+        if (StringUtils.hasText(token)) {
+            return token;
+        }
         String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText((String)bearerToken) && bearerToken.startsWith("Bearer ")) {
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
         return null;
