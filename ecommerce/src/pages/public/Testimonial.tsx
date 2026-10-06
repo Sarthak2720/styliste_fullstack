@@ -820,7 +820,7 @@ function TestimonialVideoCard({
   return (
     <div
       onClick={togglePlay}
-      className={`relative w-full aspect-video rounded-3xl overflow-hidden cursor-pointer bg-black ${
+      className={`relative w-full rounded-3xl overflow-hidden cursor-pointer bg-black ${
         featured
           ? "shadow-2xl ring-1 ring-black/5"
           : "shadow-xl lg:scale-[0.94] lg:shadow-[0_20px_45px_rgba(0,0,0,0.14)]"
@@ -834,7 +834,7 @@ function TestimonialVideoCard({
         preload="metadata"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        className={`w-full h-full object-cover transition-opacity duration-500 ${
+        className={`block w-full h-auto object-contain transition-opacity duration-500 ${
           isPlaying ? "opacity-100" : "opacity-70"
         }`}
       >
