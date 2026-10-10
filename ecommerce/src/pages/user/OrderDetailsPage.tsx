@@ -1170,7 +1170,7 @@ const OrderDetailsPage = () => {
             <div className="space-y-6">
                 <div className="rounded-2xl border border-[#E6E2D6] bg-white p-5">
                   <p className="text-xs text-dark-500">CURRENT STATUS</p>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
                         order.status
@@ -1179,9 +1179,24 @@ const OrderDetailsPage = () => {
                       {order.status.replace(/_/g, ' ')}
                     </span>
                     {order.trackingNumber && (
-                      <span className="text-xs text-dark-500">
-                        Tracking: {order.trackingNumber}
-                      </span>
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        {order.courierName && (
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
+                            Courier: {order.courierName}
+                          </span>
+                        )}
+                        <span className="text-dark-600 font-mono">
+                          AWB: {order.trackingNumber}
+                        </span>
+                        <a
+                          href={`https://shiprocket.co/tracking/${order.trackingNumber}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-primary-600 hover:text-primary-700 underline font-medium"
+                        >
+                          Track on Shiprocket ↗
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>

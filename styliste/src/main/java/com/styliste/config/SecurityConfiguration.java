@@ -144,6 +144,10 @@ public class SecurityConfiguration {
                         // Razorpay webhook
                         .requestMatchers(HttpMethod.POST, "/api/orders/webhook/razorpay").permitAll()
 
+                        // Shiprocket Webhook & Public Tracking
+                        .requestMatchers(HttpMethod.POST, "/api/shipping/webhook").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/shipping/track/**").permitAll()
+
                         // Blogs
                         .requestMatchers(HttpMethod.GET, "/api/blogs/**").permitAll()
                         .requestMatchers("/blog/**").permitAll()

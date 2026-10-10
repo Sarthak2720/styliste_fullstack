@@ -21,6 +21,7 @@ import heroTwo from '../../assets/img1.png';
 import { useAuth, useAppDispatch } from '../../hooks/useAuth';
 import { googleLogin, login } from '../../store/slices/authSlice';
 import { mergeGuestCartAfterLogin } from '../../utils/cartMerge';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 type LoginLocationState = {
   prefillEmail?: string;
@@ -240,12 +241,7 @@ const LoginPage = () => {
             toast.success('Login successful!');
             setLoginSuccess(true);
           } catch (error: unknown) {
-            const message =
-              typeof error === 'string'
-                ? error
-                : error instanceof Error
-                  ? error.message
-                  : 'Google login failed';
+            const message = getErrorMessage(error, 'Google login failed');
             toast.error(message);
             console.error('[Google Auth] Backend error:', error);
             setIsSubmitting(false);
@@ -384,12 +380,7 @@ const LoginPage = () => {
       toast.success('Login successful!');
       setLoginSuccess(true);
     } catch (error: unknown) {
-      const message =
-        typeof error === 'string'
-          ? error
-          : error instanceof Error
-            ? error.message
-            : 'Login failed';
+      const message = getErrorMessage(error, 'Login failed');
       toast.error(message);
       setIsSubmitting(false);
     }

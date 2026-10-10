@@ -196,6 +196,9 @@ export interface Order {
   discount?: number;
   tax?: number;
   trackingNumber?: string;
+  shiprocketOrderId?: number;
+  shipmentId?: number;
+  courierName?: string;
   shippingAddress: string;
   createdAt: string;
   updatedAt: string;

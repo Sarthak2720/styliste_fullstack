@@ -30,6 +30,9 @@ public class OrderDTO {
     private BigDecimal discount;
     private BigDecimal tax;
     private String trackingNumber;
+    private Long shiprocketOrderId;
+    private Long shipmentId;
+    private String courierName;
     private String shippingAddress;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -83,6 +86,30 @@ public class OrderDTO {
 
     public String getTrackingNumber() {
         return this.trackingNumber;
+    }
+
+    public Long getShiprocketOrderId() {
+        return this.shiprocketOrderId;
+    }
+
+    public void setShiprocketOrderId(Long shiprocketOrderId) {
+        this.shiprocketOrderId = shiprocketOrderId;
+    }
+
+    public Long getShipmentId() {
+        return this.shipmentId;
+    }
+
+    public void setShipmentId(Long shipmentId) {
+        this.shipmentId = shipmentId;
+    }
+
+    public String getCourierName() {
+        return this.courierName;
+    }
+
+    public void setCourierName(String courierName) {
+        this.courierName = courierName;
     }
 
     public String getShippingAddress() {
@@ -354,7 +381,7 @@ public class OrderDTO {
     public OrderDTO() {
     }
 
-    public OrderDTO(Long id, Long userId, String userName, String userEmail, String userPhone, String status, String paymentStatus, BigDecimal totalAmount, BigDecimal discount, BigDecimal tax, String trackingNumber, String shippingAddress, LocalDateTime createdAt, LocalDateTime updatedAt, List<OrderItemDTO> items, String paymentMethod, BigDecimal shippingCharges, String transactionId, List<OrderTimelineDTO> timeline) {
+    public OrderDTO(Long id, Long userId, String userName, String userEmail, String userPhone, String status, String paymentStatus, BigDecimal totalAmount, BigDecimal discount, BigDecimal tax, String trackingNumber, Long shiprocketOrderId, Long shipmentId, String courierName, String shippingAddress, LocalDateTime createdAt, LocalDateTime updatedAt, List<OrderItemDTO> items, String paymentMethod, BigDecimal shippingCharges, String transactionId, List<OrderTimelineDTO> timeline) {
         this.id = id;
         this.userId = userId;
         this.userName = userName;
@@ -366,6 +393,9 @@ public class OrderDTO {
         this.discount = discount;
         this.tax = tax;
         this.trackingNumber = trackingNumber;
+        this.shiprocketOrderId = shiprocketOrderId;
+        this.shipmentId = shipmentId;
+        this.courierName = courierName;
         this.shippingAddress = shippingAddress;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;

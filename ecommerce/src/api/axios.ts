@@ -1,7 +1,7 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import type { ApiError } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://192.168.1.115:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Queue to handle multiple concurrent requests when token is refreshing
 let isRefreshing = false;
@@ -65,8 +65,15 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(data);
       }
 
-      // 2. Handle 401 Unauthorized - Attempt access token refresh
+      // 2. Handle 401 Unauthorized - Attempt access token refresh (except for login/signup/google auth endpoints)
       if (status === 401) {
+        const isAuthEndpoint = config.url?.includes('/auth/login') ||
+                               config.url?.includes('/auth/signup') ||
+                               config.url?.includes('/auth/google');
+        if (isAuthEndpoint) {
+          return Promise.reject(data);
+        }
+
         const originalRequest = config as any;
         
         // Prevent infinite loops if retry flag is already set

@@ -317,7 +317,7 @@ public class OrderService {
         if (order.getTimeline() != null) {
             timelineDTOs = order.getTimeline().stream().map(arg_0 -> this.mapToTimelineDTO(arg_0)).collect(Collectors.toList());
         }
-        return OrderDTO.builder().id(order.getId()).userId(order.getUser().getId()).userName(order.getUser().getName()).userEmail(order.getUser().getEmail()).userPhone(order.getUserPhone()).status(order.getStatus().name()).paymentStatus(order.getPaymentStatus().name()).paymentMethod(order.getPaymentMethod().name()).shippingCharges(order.getShippingCharges()).totalAmount(order.getTotalAmount()).transactionId(order.getRazorpayPaymentId()).discount(order.getDiscount()).tax(order.getTax()).trackingNumber(order.getTrackingNumber()).shippingAddress(order.getShippingAddress()).createdAt(order.getCreatedAt()).updatedAt(order.getUpdatedAt()).items(items).timeline(timelineDTOs).build();
+        return OrderDTO.builder().id(order.getId()).userId(order.getUser().getId()).userName(order.getUser().getName()).userEmail(order.getUser().getEmail()).userPhone(order.getUserPhone()).status(order.getStatus().name()).paymentStatus(order.getPaymentStatus().name()).paymentMethod(order.getPaymentMethod().name()).shippingCharges(order.getShippingCharges()).totalAmount(order.getTotalAmount()).transactionId(order.getRazorpayPaymentId()).discount(order.getDiscount()).tax(order.getTax()).trackingNumber(order.getTrackingNumber()).shiprocketOrderId(order.getShiprocketOrderId()).shipmentId(order.getShipmentId()).courierName(order.getCourierName()).shippingAddress(order.getShippingAddress()).createdAt(order.getCreatedAt()).updatedAt(order.getUpdatedAt()).items(items).timeline(timelineDTOs).build();
     }
 
     @Transactional

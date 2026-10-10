@@ -3,6 +3,7 @@ package com.styliste.controller;
 import com.styliste.entity.SystemSetting;
 import com.styliste.entity.Testimonial;
 import com.styliste.entity.VideoTestimonial;
+import com.styliste.exception.BadRequestException;
 import com.styliste.exception.ResourceNotFoundException;
 import com.styliste.repository.SystemSettingRepository;
 import com.styliste.repository.TestimonialRepository;
@@ -228,11 +229,24 @@ public class TestimonialController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> uploadFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("type") String type) {
-        String fileUrl = fileStorageService.saveFile(file, type);
-        Map<String, String> response = new HashMap<>();
-        response.put("url", fileUrl);
-        return ResponseEntity.ok(response);
+            @RequestParam(value = "type", required = false, defaultValue = "video") String type) {
+        try {
+            if (file == null || file.isEmpty()) {
+                throw new BadRequestException("Uploaded file is empty.");
+            }
+            String detectedType = type;
+            if (file.getContentType() != null && file.getContentType().startsWith("image")) {
+                detectedType = "image";
+            }
+            String fileUrl = fileStorageService.saveFile(file, detectedType);
+            Map<String, String> response = new HashMap<>();
+            response.put("url", fileUrl);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error saving testimonial file: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to save file: " + e.getMessage());
+        }
     }
 
     // ==========================================

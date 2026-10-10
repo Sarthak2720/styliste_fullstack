@@ -457,9 +457,10 @@ function AdminPanel(props: {
         videoUrl: response.url,
         caption: current?.caption?.trim() || file.name.replace(/\.[^.]+$/, ""),
       }));
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to upload video:", err);
-      window.alert("Failed to upload video. Please check file size and try again.");
+      const msg = err?.response?.data?.message || err?.message || "Please check file size and try again.";
+      window.alert("Failed to upload video: " + msg);
     } finally {
       setIsUploadingVideo(false);
     }
@@ -483,9 +484,10 @@ function AdminPanel(props: {
         ...current!,
         photo: response.url,
       }));
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to upload photo:", err);
-      window.alert("Failed to upload photo. Please check file size and try again.");
+      const msg = err?.response?.data?.message || err?.message || "Please check file size and try again.";
+      window.alert("Failed to upload photo: " + msg);
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -761,11 +763,23 @@ function PreviewPage({ testimonials, videos, quote }: { testimonials: Testimonia
         <p style={{ opacity: 0.9, maxWidth: 480, margin: "0 auto", fontSize: 14 }}>Real stories from our valued customers who trusted us with their fashion dreams.</p>
       </div>
       <div style={{ padding: "40px 20px", textAlign: "center" }}>
-        <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginBottom: 18 }}>
-          {videos.map((video, i) => (
-            <div key={video.id} style={{ background: "#000", borderRadius: 10, width: i === 1 ? 340 : 270, height: i === 1 ? 200 : 165, position: "relative", overflow: "hidden" }}>
-              {video.videoUrl ? <video src={getAssetUrl(video.videoUrl)} muted controls style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><Play size={28} color="#555" /></div>}
-              <VolumeX size={16} color="#eee" style={{ position: "absolute", bottom: 8, right: 10 }} />
+        <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap", marginBottom: 20 }}>
+          {videos.map((video) => (
+            <div key={video.id} style={{ background: "#1c1b18", borderRadius: 16, width: 280, height: 380, position: "relative", overflow: "hidden", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", border: "1px solid #e0dbc8" }}>
+              {video.videoUrl ? (
+                <video src={getAssetUrl(video.videoUrl)} muted controls style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#8a8575" }}>
+                  <Play size={32} color="#8a8575" />
+                  <span style={{ fontSize: 12, marginTop: 8 }}>Styliste Atelier</span>
+                </div>
+              )}
+              {video.caption && (
+                <div style={{ position: "absolute", bottom: 10, left: 10, right: 40, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", padding: "4px 8px", borderRadius: 6, color: "#fff", fontSize: 11, textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {video.caption}
+                </div>
+              )}
+              <VolumeX size={16} color="#eee" style={{ position: "absolute", bottom: 12, right: 12 }} />
             </div>
           ))}
         </div>

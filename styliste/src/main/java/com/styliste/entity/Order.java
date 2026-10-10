@@ -91,6 +91,12 @@ public class Order {
     private BigDecimal tax;
     @Column(length=50)
     private String trackingNumber;
+    @Column(name="shiprocket_order_id")
+    private Long shiprocketOrderId;
+    @Column(name="shiprocket_shipment_id")
+    private Long shipmentId;
+    @Column(name="courier_name", length=100)
+    private String courierName;
     @Column(columnDefinition="TEXT")
     private String shippingAddress;
     @Column(name="created_at", nullable=false, updatable=false)
@@ -181,6 +187,30 @@ public class Order {
 
     public String getTrackingNumber() {
         return this.trackingNumber;
+    }
+
+    public Long getShiprocketOrderId() {
+        return this.shiprocketOrderId;
+    }
+
+    public void setShiprocketOrderId(Long shiprocketOrderId) {
+        this.shiprocketOrderId = shiprocketOrderId;
+    }
+
+    public Long getShipmentId() {
+        return this.shipmentId;
+    }
+
+    public void setShipmentId(Long shipmentId) {
+        this.shipmentId = shipmentId;
+    }
+
+    public String getCourierName() {
+        return this.courierName;
+    }
+
+    public void setCourierName(String courierName) {
+        this.courierName = courierName;
     }
 
     public String getShippingAddress() {
@@ -491,7 +521,7 @@ public class Order {
         this.timeline = Order.$default$timeline();
     }
 
-    public Order(Long id, User user, String userPhone, OrderStatus status, PaymentStatus paymentStatus, BigDecimal totalAmount, BigDecimal discount, BigDecimal tax, String trackingNumber, String shippingAddress, LocalDateTime createdAt, LocalDateTime updatedAt, List<OrderItem> items, Invoice invoice, String razorpayOrderId, String razorpayPaymentId, String razorpaySignature, PaymentMethod paymentMethod, BigDecimal shippingCharges, List<OrderTimeline> timeline, LocalDateTime deliveredAt) {
+    public Order(Long id, User user, String userPhone, OrderStatus status, PaymentStatus paymentStatus, BigDecimal totalAmount, BigDecimal discount, BigDecimal tax, String trackingNumber, Long shiprocketOrderId, Long shipmentId, String courierName, String shippingAddress, LocalDateTime createdAt, LocalDateTime updatedAt, List<OrderItem> items, Invoice invoice, String razorpayOrderId, String razorpayPaymentId, String razorpaySignature, PaymentMethod paymentMethod, BigDecimal shippingCharges, List<OrderTimeline> timeline, LocalDateTime deliveredAt) {
         this.id = id;
         this.user = user;
         this.userPhone = userPhone;
@@ -501,6 +531,9 @@ public class Order {
         this.discount = discount;
         this.tax = tax;
         this.trackingNumber = trackingNumber;
+        this.shiprocketOrderId = shiprocketOrderId;
+        this.shipmentId = shipmentId;
+        this.courierName = courierName;
         this.shippingAddress = shippingAddress;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;

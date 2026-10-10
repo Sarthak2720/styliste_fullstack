@@ -181,6 +181,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import { authApi } from '../../api/authApi';
 import type { AuthResponse, GoogleAuthRequest, LoginRequest, SignUpRequest, User } from '../../types';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 interface AuthState {
   user: User | null;
@@ -220,7 +221,7 @@ export const login = createAsyncThunk<AuthResponse, LoginRequest, { rejectValue:
       return response;
     } catch (error: any) {
       console.error("[Thunk] ❌ ERROR:", error);
-      return rejectWithValue(error.message || 'Login failed');
+      return rejectWithValue(getErrorMessage(error, 'Login failed'));
     }
   }
 );
@@ -240,7 +241,7 @@ export const signup = createAsyncThunk<AuthResponse, SignUpRequest, { rejectValu
 
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Signup failed');
+      return rejectWithValue(getErrorMessage(error, 'Signup failed'));
     }
   }
 );
@@ -260,7 +261,7 @@ export const googleLogin = createAsyncThunk<AuthResponse, GoogleAuthRequest, { r
 
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Google login failed');
+      return rejectWithValue(getErrorMessage(error, 'Google login failed'));
     }
   }
 );

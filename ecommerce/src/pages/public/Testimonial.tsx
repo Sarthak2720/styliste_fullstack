@@ -742,18 +742,19 @@ const testimonialVideos = [
 type TestimonialVideoCardProps = {
   desktopSrc: string;
   mobileSrc?: string;
-  featured?: boolean;
+  caption?: string;
 };
 
 /* ================= VIDEO CARD ================= */
 function TestimonialVideoCard({
   desktopSrc,
   mobileSrc = desktopSrc,
-  featured = false,
+  caption,
 }: TestimonialVideoCardProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== "undefined"
       ? window.matchMedia("(max-width: 768px)").matches
@@ -779,8 +780,9 @@ function TestimonialVideoCard({
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !videoSrc) return;
 
+    setHasError(false);
     video.currentTime = 0;
     video.muted = true;
     setIsMuted(true);
@@ -820,67 +822,90 @@ function TestimonialVideoCard({
   return (
     <div
       onClick={togglePlay}
-      className={`relative w-full rounded-3xl overflow-hidden cursor-pointer bg-black ${
-        featured
-          ? "shadow-2xl ring-1 ring-black/5"
-          : "shadow-xl lg:scale-[0.94] lg:shadow-[0_20px_45px_rgba(0,0,0,0.14)]"
-      }`}
+      className="group relative w-full aspect-[9/16] sm:aspect-[4/5] md:aspect-[9/16] max-h-[560px] rounded-3xl overflow-hidden cursor-pointer bg-dark-900 shadow-xl border border-sage/20 transition-all duration-300 hover:shadow-2xl hover:border-sage/40 hover:-translate-y-1"
     >
-      <video
-        ref={videoRef}
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        className={`block w-full h-auto object-contain transition-opacity duration-500 ${
-          isPlaying ? "opacity-100" : "opacity-70"
-        }`}
-      >
-        <source src={videoSrc} type="video/mp4" />
-      </video>
+      {videoSrc && !hasError ? (
+        <video
+          ref={videoRef}
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          onError={() => setHasError(true)}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          className={`w-full h-full object-cover transition-opacity duration-500 ${
+            isPlaying ? "opacity-100" : "opacity-80"
+          }`}
+        >
+          <source src={videoSrc} type="video/mp4" />
+        </video>
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-sage/5">
+          <div className="w-14 h-14 rounded-full bg-sage/10 flex items-center justify-center mb-3 text-sage">
+            <Play className="w-6 h-6 ml-0.5" />
+          </div>
+          <p className="text-sage font-serif text-sm">Styliste Atelier</p>
+          <p className="text-sage/60 text-xs mt-1">Couture Showcase</p>
+        </div>
+      )}
 
-      {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-black/60 backdrop-blur-md p-6 rounded-full">
-            <Play className="w-10 h-10 text-white" />
+      {/* Play Overlay when Paused */}
+      {!isPlaying && videoSrc && !hasError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] transition-all">
+          <div className="bg-white/90 text-dark-900 p-5 rounded-full shadow-lg transform transition-transform group-hover:scale-110">
+            <Play className="w-8 h-8 fill-current ml-1" />
           </div>
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={toggleMute}
-        aria-label={isMuted ? "Unmute testimonial video" : "Mute testimonial video"}
-        className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md p-3 rounded-full text-white"
-      >
-        {isMuted ? <VolumeX /> : <Volume2 />}
-      </button>
+      {/* Caption Badge */}
+      {caption && (
+        <div className="absolute bottom-4 left-4 right-16 bg-black/50 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 text-white text-xs font-medium truncate">
+          {caption}
+        </div>
+      )}
+
+      {/* Mute / Unmute Button */}
+      {videoSrc && !hasError && (
+        <button
+          type="button"
+          onClick={toggleMute}
+          aria-label={isMuted ? "Unmute video" : "Mute video"}
+          className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 backdrop-blur-md p-2.5 rounded-full text-white transition-all shadow-md"
+        >
+          {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        </button>
+      )}
     </div>
   );
 }
 
 function HeroVideo({ videos }: { videos: any[] }) {
+  if (!videos || videos.length === 0) return null;
+
+  const gridColsClass =
+    videos.length === 1
+      ? "max-w-md mx-auto grid-cols-1"
+      : videos.length === 2
+      ? "max-w-3xl mx-auto grid-cols-1 sm:grid-cols-2"
+      : "max-w-6xl mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+
   return (
     <section className="py-20 bg-white">
       <div className="container mx-auto px-6">
-        <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.18fr)_minmax(0,0.95fr)]">
-          {videos.map((video, idx) => {
-            const featured = idx === 1;
-            const orderClassName = idx === 0 ? "order-2 lg:order-1" : idx === 1 ? "order-1 lg:order-2" : "order-3";
-            return (
-              <div key={video.id || idx} className={orderClassName}>
-                <TestimonialVideoCard
-                  desktopSrc={getAssetUrl(video.videoUrl)}
-                  featured={featured}
-                />
-              </div>
-            );
-          })}
+        <div className={`grid items-center justify-center gap-8 ${gridColsClass}`}>
+          {videos.map((video, idx) => (
+            <div key={video.id || idx} className="w-full flex justify-center">
+              <TestimonialVideoCard
+                desktopSrc={getAssetUrl(video.videoUrl)}
+                caption={video.caption}
+              />
+            </div>
+          ))}
         </div>
 
-        <div className="mt-10 text-center max-w-xl mx-auto">
+        <div className="mt-12 text-center max-w-xl mx-auto">
           <div className="w-20 h-px bg-primary/20 mx-auto mb-4" />
           <p className="text-slate-600 text-sm leading-relaxed">
             A glimpse into the craftsmanship, precision, and passion behind every

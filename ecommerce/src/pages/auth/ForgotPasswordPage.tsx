@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import authApi from '../../api/authApi';
 import logo from '../../assets/logo.png';
 import forgotBackground from '../../assets/fg1.png';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 /* ================== TYPES ================== */
 type ForgotPasswordStage = 'email' | 'otp' | 'reset';
@@ -108,22 +109,7 @@ const ForgotPasswordPage = () => {
   // Timer for OTP resend
   const [otpTimer, setOtpTimer] = useState(0);
 
-  const getApiErrorMessage = (error: unknown, fallback: string) => {
-    if (typeof error === 'string' && error.trim()) {
-      return error;
-    }
-    if (error && typeof error === 'object' && 'message' in error) {
-      const directMessage = (error as { message?: unknown }).message;
-      if (typeof directMessage === 'string' && directMessage.trim()) {
-        return directMessage;
-      }
-    }
-    if (error && typeof error === 'object' && 'response' in error) {
-      const response = (error as { response?: { data?: { message?: string } } }).response;
-      if (response?.data?.message) return response.data.message;
-    }
-    return fallback;
-  };
+  const getApiErrorMessage = (error: unknown, fallback: string) => getErrorMessage(error, fallback);
   
   // Email validation
   const validateEmail = (email: string) => {

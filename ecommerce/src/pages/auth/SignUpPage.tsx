@@ -11,6 +11,7 @@ import heroTwo from '../../assets/img1.png';
 import { useAuth } from '../../hooks/useAuth';
 import { signup } from '../../store/slices/authSlice';
 import { mergeGuestCartAfterLogin } from '../../utils/cartMerge';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 type Slide = {
   image: string;
@@ -251,12 +252,7 @@ const SignUpPage = () => {
       toast.success('Account created successfully!');
       navigate('/');
     } catch (error: unknown) {
-      const message =
-        typeof error === 'string'
-          ? error
-          : error instanceof Error
-            ? error.message
-            : 'Signup failed';
+      const message = getErrorMessage(error, 'Signup failed');
       toast.error(message);
       setIsSubmitting(false);
     }

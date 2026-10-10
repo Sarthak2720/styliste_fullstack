@@ -80,8 +80,6 @@ public class AuthController {
         log.info("Login attempt for email: {}", request.getEmail());
         AuthResponse authResponse = this.authService.login(request);
         setAuthCookies(response, authResponse.getToken(), authResponse.getRefreshToken());
-        authResponse.setToken(null);
-        authResponse.setRefreshToken(null);
         return ResponseEntity.ok(authResponse);
     }
 
@@ -90,8 +88,6 @@ public class AuthController {
         log.info("Signup attempt for email: {}", request.getEmail());
         AuthResponse authResponse = this.authService.signup(request);
         setAuthCookies(response, authResponse.getToken(), authResponse.getRefreshToken());
-        authResponse.setToken(null);
-        authResponse.setRefreshToken(null);
         return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(authResponse);
     }
 
@@ -103,8 +99,6 @@ public class AuthController {
         log.info("Google login attempt received");
         AuthResponse authResponse = this.authService.googleLogin(request.getCode(), origin, requestedWith);
         setAuthCookies(response, authResponse.getToken(), authResponse.getRefreshToken());
-        authResponse.setToken(null);
-        authResponse.setRefreshToken(null);
         return ResponseEntity.ok(authResponse);
     }
 
@@ -117,7 +111,7 @@ public class AuthController {
         }
         TokenRefreshResponse refreshResponse = this.authService.refreshToken(refreshTokenValue);
         setAuthCookies(response, refreshResponse.getAccessToken(), refreshResponse.getRefreshToken());
-        return ResponseEntity.ok(new TokenRefreshResponse(null, null));
+        return ResponseEntity.ok(refreshResponse);
     }
 
     @PostMapping(value={"/logout"})

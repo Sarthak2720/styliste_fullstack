@@ -3192,12 +3192,15 @@ import {
   FiRotateCcw,
   // FiDollarSign,
   FiImage,
+  FiFileText,
 } from "react-icons/fi";
 import { orderApi } from "../../api/orderApi";
+import { shippingApi } from "../../api/shippingApi";
 import type { Order } from "../../types";
 import { format, formatDistanceToNow } from "date-fns";
 import toast from "react-hot-toast";
 import { formatINR } from "../../utils/currency";
+import { getErrorMessage } from "../../utils/errorHandler";
 
 const SERVER_URL =
   import.meta.env.VITE_API_IMG_URL || "http://192.168.1.111:8090";
@@ -3331,6 +3334,45 @@ const AdminOrders = () => {
   const [updateStatusModal, setUpdateStatusModal] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [shippingActionLoading, setShippingActionLoading] = useState<number | null>(null);
+
+  const handleCreateShipment = async (orderId: number) => {
+    try {
+      setShippingActionLoading(orderId);
+      toast.loading("Creating shipment on Shiprocket...", { id: "shiprocket" });
+      const updatedOrder = await shippingApi.createShipment(orderId);
+      toast.success(
+        `Shipment created! AWB: ${updatedOrder.trackingNumber || "Assigned"}`,
+        { id: "shiprocket" }
+      );
+      // Refresh list
+      fetchOrders();
+    } catch (err: any) {
+      const errMsg = getErrorMessage(err, "Failed to create Shiprocket shipment");
+      toast.error(errMsg, { id: "shiprocket", duration: 6000 });
+    } finally {
+      setShippingActionLoading(null);
+    }
+  };
+
+  const handlePrintLabel = async (orderId: number) => {
+    try {
+      setShippingActionLoading(orderId);
+      toast.loading("Generating shipping label...", { id: "label" });
+      const labelUrl = await shippingApi.getShippingLabel(orderId);
+      toast.dismiss("label");
+      if (labelUrl) {
+        window.open(labelUrl, "_blank");
+      } else {
+        toast.error("Label URL not available yet");
+      }
+    } catch (err: any) {
+      const errMsg = getErrorMessage(err, "Failed to get shipping label");
+      toast.error(errMsg, { id: "label", duration: 6000 });
+    } finally {
+      setShippingActionLoading(null);
+    }
+  };
 
   // Column filters
   const [columnFilters, setColumnFilters] = useState({
@@ -3680,11 +3722,7 @@ const AdminOrders = () => {
       setTotalOrders(totalCount);
     } catch (error: any) {
       console.error("Error fetching orders:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        "Failed to fetch orders";
+      const errorMessage = getErrorMessage(error, "Failed to fetch orders");
       toast.error(errorMessage);
       setOrders([]);
       setTotalOrders(0);
@@ -3733,11 +3771,7 @@ const AdminOrders = () => {
       setSelectedOrder(fullOrderData);
     } catch (error: any) {
       console.error("Error fetching order details:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        "Failed to fetch order details";
+      const errorMessage = getErrorMessage(error, "Failed to fetch order details");
       toast.error(errorMessage);
       setShowDetailsModal(false);
     } finally {
@@ -3804,12 +3838,8 @@ const AdminOrders = () => {
       // Refresh orders list
       fetchOrders();
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        "Failed to update order status";
-      toast.error(errorMessage);
+      const errorMessage = getErrorMessage(error, "Failed to update order status");
+      toast.error(errorMessage, { duration: 5000 });
     }
   };
 
@@ -4140,6 +4170,34 @@ const AdminOrders = () => {
                         >
                           <FiEdit2 size={16} />
                         </button>
+
+                        {/* Shiprocket Ship Button */}
+                        {!order.shipmentId && order.status !== "CANCELLED" && order.status !== "RETURNED" && (
+                          <button
+                            onClick={() => handleCreateShipment(order.id)}
+                            disabled={shippingActionLoading === order.id}
+                            className="p-1 text-emerald-600 hover:text-emerald-900 hover:bg-emerald-50 rounded transition-colors"
+                            title="Ship via Shiprocket"
+                          >
+                            {shippingActionLoading === order.id ? (
+                              <FiLoader className="animate-spin" size={16} />
+                            ) : (
+                              <FiTruck size={16} />
+                            )}
+                          </button>
+                        )}
+
+                        {/* Shiprocket Print Label Button */}
+                        {order.shipmentId && (
+                          <button
+                            onClick={() => handlePrintLabel(order.id)}
+                            disabled={shippingActionLoading === order.id}
+                            className="p-1 text-amber-600 hover:text-amber-900 hover:bg-amber-50 rounded transition-colors"
+                            title="Print Shipping Label"
+                          >
+                            <FiFileText size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -4359,14 +4417,47 @@ const AdminOrders = () => {
                       ))}
                     </div>
 
-                    {selectedOrder.trackingNumber && (
-                      <div>
-                        <p className="text-xs text-dark-500 mb-2">Tracking Number</p>
-                        <div className="rounded-xl border border-dark-200 bg-white p-4 text-sm text-dark-700 font-mono">
-                          {selectedOrder.trackingNumber}
+                    <div>
+                      <p className="text-xs text-dark-500 mb-2">Shiprocket Logistics</p>
+                      <div className="rounded-xl border border-dark-200 bg-gray-50 p-4 space-y-2 text-sm text-dark-700">
+                        <div className="flex justify-between items-center">
+                          <span className="text-dark-500">AWB Tracking Number:</span>
+                          <span className="font-mono font-medium">{selectedOrder.trackingNumber || "Not generated yet"}</span>
+                        </div>
+                        {selectedOrder.courierName && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-dark-500">Courier Partner:</span>
+                            <span className="font-semibold text-emerald-700">{selectedOrder.courierName}</span>
+                          </div>
+                        )}
+                        {selectedOrder.shipmentId && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-dark-500">Shipment ID:</span>
+                            <span className="font-mono">{selectedOrder.shipmentId}</span>
+                          </div>
+                        )}
+                        <div className="pt-2 flex gap-2">
+                          {!selectedOrder.shipmentId && selectedOrder.status !== "CANCELLED" && selectedOrder.status !== "RETURNED" && (
+                            <button
+                              onClick={() => handleCreateShipment(selectedOrder.id)}
+                              disabled={shippingActionLoading === selectedOrder.id}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5"
+                            >
+                              <FiTruck size={14} /> Create Shipment on Shiprocket
+                            </button>
+                          )}
+                          {selectedOrder.shipmentId && (
+                            <button
+                              onClick={() => handlePrintLabel(selectedOrder.id)}
+                              disabled={shippingActionLoading === selectedOrder.id}
+                              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5"
+                            >
+                              <FiFileText size={14} /> Print Shipping Label
+                            </button>
+                          )}
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
                 </motion.div>
