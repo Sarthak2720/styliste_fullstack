@@ -7,7 +7,7 @@ export interface ShippingLabelResponse {
 
 export const shippingApi = {
   /**
-   * Admin: Shiprocket par shipment create karega aur AWB auto-assign karega
+   * Admin: Creates shipment on Shiprocket and auto-assigns AWB
    */
   createShipment: async (orderId: number): Promise<Order> => {
     const response = await axiosInstance.post<{ success: boolean; message: string; data: Order }>(
@@ -17,7 +17,7 @@ export const shippingApi = {
   },
 
   /**
-   * Admin: Shipping label PDF URL fetch karega
+   * Admin: Fetches shipping label PDF URL
    */
   getShippingLabel: async (orderId: number): Promise<string> => {
     const response = await axiosInstance.get<{ success: boolean; message: string; data: ShippingLabelResponse }>(
@@ -27,7 +27,7 @@ export const shippingApi = {
   },
 
   /**
-   * Public: AWB tracking number se live tracking data fetch karega
+   * Public: Fetches live tracking data using AWB tracking code
    */
   trackShipment: async (awbCode: string): Promise<any> => {
     const response = await axiosInstance.get<{ success: boolean; message: string; data: any }>(

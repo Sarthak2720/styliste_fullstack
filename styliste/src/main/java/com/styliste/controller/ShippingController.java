@@ -35,7 +35,7 @@ public class ShippingController {
     private OrderRepository orderRepository;
 
     /**
-     * Admin Endpoint: Order ko Shiprocket par push karke shipment create karta hai
+     * Admin Endpoint: Pushes order to Shiprocket and creates shipment
      */
     @PostMapping("/admin/orders/{orderId}/create-shipment")
     @PreAuthorize("hasRole('ADMIN')")
@@ -47,7 +47,7 @@ public class ShippingController {
     }
 
     /**
-     * Admin Endpoint: Shipping label PDF download URL generate karta hai
+     * Admin Endpoint: Generates shipping label PDF download URL
      */
     @GetMapping("/admin/orders/{orderId}/label")
     @PreAuthorize("hasRole('ADMIN')")
@@ -70,7 +70,7 @@ public class ShippingController {
     }
 
     /**
-     * Public/Customer Endpoint: Live tracking status laata hai
+     * Public/Customer Endpoint: Retrieves live tracking status
      */
     @GetMapping("/track/{awbCode}")
     public ResponseEntity<ApiResponse<JsonNode>> trackShipment(@PathVariable String awbCode) {
@@ -88,7 +88,7 @@ public class ShippingController {
     private String basicPassword;
 
     /**
-     * Webhook Endpoint: Shiprocket se automatic status update leta hai
+     * Webhook Endpoint: Receives automatic status updates from Shiprocket
      * With Security Token Verification to prevent spoofing
      */
     @PostMapping("/webhook")

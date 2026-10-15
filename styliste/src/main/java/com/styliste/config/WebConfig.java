@@ -26,9 +26,10 @@ implements WebMvcConfigurer {
     private String uploadDir;
 
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        Path rootUploadPath = Paths.get("uploads", new String[0]);
+        Path uploadPath = Paths.get(uploadDir != null && !uploadDir.isBlank() ? uploadDir : "uploads/images").toAbsolutePath();
+        Path rootUploadPath = uploadPath.getParent() != null && uploadPath.endsWith("images") ? uploadPath.getParent() : uploadPath;
         String absolutePath = rootUploadPath.toFile().getAbsolutePath();
-        registry.addResourceHandler(new String[]{"/uploads/**"}).addResourceLocations(new String[]{"file:" + absolutePath + "/"});
+        registry.addResourceHandler("/uploads/**").addResourceLocations("file:" + absolutePath + "/");
     }
 
     public void addViewControllers(ViewControllerRegistry registry) {

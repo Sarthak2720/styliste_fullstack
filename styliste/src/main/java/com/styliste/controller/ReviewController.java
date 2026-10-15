@@ -30,11 +30,13 @@
  */
 package com.styliste.controller;
 
+import com.styliste.dto.GoogleReviewDTO;
 import com.styliste.dto.ReviewRequestDTO;
 import com.styliste.dto.ReviewResponseDTO;
 import com.styliste.entity.User;
 import com.styliste.exception.ResourceNotFoundException;
 import com.styliste.repository.UserRepository;
+import com.styliste.service.GoogleReviewsService;
 import com.styliste.service.ReviewService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +65,13 @@ public class ReviewController {
     private ReviewService reviewService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private GoogleReviewsService googleReviewsService;
+
+    @GetMapping
+    public ResponseEntity<List<GoogleReviewDTO>> getGoogleReviews() {
+        return ResponseEntity.ok(this.googleReviewsService.getReviews());
+    }
 
     @PostMapping(consumes={"multipart/form-data"})
     @PreAuthorize(value="hasRole('CUSTOMER')")

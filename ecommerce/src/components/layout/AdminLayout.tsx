@@ -130,6 +130,7 @@ import {
   FiSettings,
   FiMessageSquare,
   FiInfo,
+  FiBell,
 } from "react-icons/fi";
 import useAuth from "../../hooks/useAuth";
 import { logout } from "../../store/slices/authSlice";
@@ -155,6 +156,7 @@ const AdminLayout = () => {
     { name: "Blog Management", path: "/admin/blogs", icon: FiFileText },
     { name: "Testimonials Management", path: "/admin/testimonials", icon: FiMessageSquare },
     { name: "About Us Management", path: "/admin/about-us", icon: FiInfo },
+    { name: "Announcement Popups", path: "/admin/announcements", icon: FiBell },
     { name: "Virtual Try On", path: "/admin/try-on-settings", icon: FiSettings },
     { name: "Visit Site", path: "/", icon: FiExternalLink, external: true },
     { name: "Contact Messages", path: "/admin/contacts", icon: FiMail },

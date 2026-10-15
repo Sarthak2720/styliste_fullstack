@@ -300,3 +300,34 @@ export interface ApiError {
   path: string;
   validationErrors?: Record<string, string>;
 }
+
+// ==================== ANNOUNCEMENT POPUP ====================
+export interface AnnouncementPopup {
+  id: number;
+  title: string;
+  subtitle?: string;
+  content?: string;
+  backgroundColor?: string | null;
+  imageUrl?: string;
+  popupWidth?: number | null;
+  popupMaxHeight?: number | null;
+  buttonText?: string | null;
+  buttonLink?: string | null;
+  enabled: boolean;
+  startDate?: string | null;
+  endDate?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// ==================== GOOGLE REVIEWS ====================
+export interface GoogleReview {
+  reviewId?: string;
+  authorName: string;
+  authorPhotoUrl?: string;
+  rating: number;
+  text: string;
+  date?: string;
+  timestamp?: number;
+  reviewUrl?: string;
+}

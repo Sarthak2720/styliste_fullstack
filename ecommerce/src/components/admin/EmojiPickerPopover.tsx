@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
+import EmojiPicker, { type EmojiClickData, EmojiStyle } from "emoji-picker-react";
 
 interface Props {
   onSelect: (emoji: string) => void;
@@ -23,20 +23,23 @@ export default function EmojiPickerPopover({ onSelect, onClose }: Props) {
     <div
       ref={ref}
       style={{
-        boxShadow: "0 8px 30px rgba(0,0,0,.18)",
+        boxShadow: "0 12px 35px rgba(0,0,0,.22)",
         borderRadius: 12,
         overflow: "hidden",
         background: "#fff",
+        zIndex: 9999,
       }}
     >
       <EmojiPicker
         onEmojiClick={(data: EmojiClickData) => {
           onSelect(data.emoji);
         }}
+        emojiStyle={EmojiStyle.NATIVE}
         width={320}
         height={380}
         searchPlaceholder="Search emoji..."
         previewConfig={{ showPreview: false }}
+        lazyLoadEmojis={true}
       />
     </div>
   );

@@ -17,10 +17,25 @@
   margin-bottom: 0;
 }
 
-.tiptap ul,
+.tiptap ul {
+  list-style-type: disc !important;
+  padding-left: 1.6em !important;
+  margin: 0.35em 0 !important;
+}
+
 .tiptap ol {
-  padding-left: 1.5em;
-  margin: 0.25em 0;
+  list-style-type: decimal !important;
+  padding-left: 1.6em !important;
+  margin: 0.35em 0 !important;
+}
+
+.tiptap li {
+  margin-bottom: 0.25em !important;
+  display: list-item !important;
+}
+
+.tiptap li p {
+  margin: 0 !important;
 }
 
 .tiptap blockquote {
@@ -95,20 +110,33 @@
   font-weight: bold !important;
 }
 
+.rich-text-content ul,
+.rich-text-content ol {
+  display: inline-block !important;
+  text-align: left !important;
+  list-style-position: outside !important;
+  padding-left: 1.5em !important;
+  margin: 0.5em auto !important;
+  max-width: 100% !important;
+}
+
 .rich-text-content ul {
   list-style-type: disc !important;
-  padding-left: 1.5em !important;
-  margin: 0.5em 0 !important;
 }
 
 .rich-text-content ol {
   list-style-type: decimal !important;
-  padding-left: 1.5em !important;
-  margin: 0.5em 0 !important;
 }
 
 .rich-text-content li {
-  margin-bottom: 0.25em !important;
+  display: list-item !important;
+  margin-bottom: 0.35em !important;
+  line-height: 1.55 !important;
+}
+
+.rich-text-content li p {
+  margin: 0 !important;
+  display: inline !important;
 }
 
 .rich-text-content blockquote {

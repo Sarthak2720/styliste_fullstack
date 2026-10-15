@@ -130,7 +130,7 @@ public class SecurityConfiguration {
                         // Public GET APIs
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**",
                                 "/api/appointments/types", "/api/appointments/available-slots",
-                                "/api/testimonials/**", "/api/about-sections/**").permitAll()
+                                "/api/testimonials/**", "/api/about-sections/**", "/api/announcements/**").permitAll()
 
                         // Public POST APIs
                         .requestMatchers(HttpMethod.POST, "/api/products/search").permitAll()
@@ -166,9 +166,17 @@ public class SecurityConfiguration {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         if (allowedOrigins != null && !allowedOrigins.isBlank()) {
-            configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+            configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList());
         } else {
-            configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:3000"));
+            configuration.setAllowedOrigins(Arrays.asList(
+                    "https://styliste-couturier.com",
+                    "https://www.styliste-couturier.com",
+                    "http://localhost:5173",
+                    "http://localhost:3000"
+            ));
         }
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));

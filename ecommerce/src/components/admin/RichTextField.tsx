@@ -259,12 +259,12 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
  
       {/* Popovers */}
       {showEmoji && (
-        <div style={{ position: "absolute", zIndex: 700, top: 42, left: 0 }}>
+        <div style={{ position: "absolute", zIndex: 999, top: 42, left: 0 }}>
           <EmojiPickerPopover onSelect={(emoji) => { insertEmoji(emoji); setShowEmoji(false); }} onClose={() => setShowEmoji(false)} />
         </div>
       )}
       {showIcons && (
-        <div style={{ position: "absolute", zIndex: 700, top: 42, left: 0 }}>
+        <div style={{ position: "absolute", zIndex: 999, top: 42, left: 0 }}>
           <IconPickerPopover onSelect={(iconName) => { insertIcon(iconName); setShowIcons(false); }} onClose={() => setShowIcons(false)} />
         </div>
       )}

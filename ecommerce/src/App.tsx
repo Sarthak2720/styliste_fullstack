@@ -221,7 +221,6 @@ import { useAppDispatch } from './hooks/useAuth';
 import { loadUserFromStorage } from './store/slices/authSlice';
 import { loadCartFromStorage } from './store/slices/cartSlice';
 import { FloatingAppointmentButton } from "./pages/public/FloatingAppointmentButton";
-import { useAppSelector } from "./hooks/useAuth";
 
 // Public Pages
 import HomePage from './pages/public/HomePage';
@@ -276,6 +275,8 @@ import AdminBlogCreate from './pages/admin/AdminBlogCreate';
 import AdminTryOnSettings from './pages/admin/AdminTryOnSettings';
 import AdminTestimonialsManagement from './pages/admin/AdminTestimonialsManagement';
 import AdminAboutUsManagement from './pages/admin/AdminAboutUsManagement';
+import AdminAnnouncements from './pages/admin/AdminAnnouncements';
+import AnnouncementPopupModal from './components/common/AnnouncementPopupModal';
 
 const NotFound = () => (
   <div className="p-8 text-center text-red-500">
@@ -296,12 +297,11 @@ function ScrollToTop() {
 function App() {
   const { pathname } = useLocation();
   const dispatch = useAppDispatch();
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-  const isAdmin = user?.role === "ADMIN";
   const isAuthRoute =
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/forgot-password";
+  const isAdminRoute = pathname.startsWith("/admin");
 
   useEffect(() => {
     dispatch(loadUserFromStorage());
@@ -412,6 +412,7 @@ function App() {
   <Route path="blogs" element={<AdminBlogCreate />} />
   <Route path="testimonials" element={<AdminTestimonialsManagement />} />
   <Route path="about-us" element={<AdminAboutUsManagement />} />
+  <Route path="announcements" element={<AdminAnnouncements />} />
   <Route path="reports" element={<div className="p-6">Reports Page</div>} />
   <Route path="settings" element={<div className="p-6">Settings Page</div>} />
   <Route path="try-on-settings" element={<AdminTryOnSettings />} />
@@ -422,8 +423,13 @@ function App() {
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
 
-      {/* Floating buttons only for non-admin */}
-      {(!isAuthenticated || !isAdmin) && !isAuthRoute && (
+      {/* Announcement Popup Modal on storefront pages */}
+      {!isAdminRoute && !isAuthRoute && (
+        <AnnouncementPopupModal />
+      )}
+
+      {/* Floating buttons on storefront pages */}
+      {!isAdminRoute && !isAuthRoute && (
         <>
           <FloatingAppointmentButton />
           <WhatsAppButton />
