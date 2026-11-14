@@ -22,6 +22,9 @@ export interface BlogPostSummary {
   author: string;
   readTime: string;
   status: "DRAFT" | "PUBLISHED";
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
   sectionsCount: number;
   createdAt: string;
   updatedAt: string;
@@ -39,6 +42,9 @@ export interface BlogPostCreateRequest {
   author: string;
   readTime: string;
   status: "DRAFT" | "PUBLISHED";
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
   sections: BlogSection[];
 }
 
@@ -53,6 +59,9 @@ export interface PublicBlogSummary {
   coverUrl: string;
   author: string;
   readTime: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
   createdAt: string;
 }
 

@@ -7,6 +7,7 @@ import DOMPurify from "dompurify";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 import { blogPublicApi, type PublicBlogDetail } from "../../api/blogApi";
+import SEO from "../../components/common/SEO";
 import { cssSizeToPx, normalizeIconId, renderIconById } from "../../components/admin/iconHub";
 
 const IMG_BASE = import.meta.env.VITE_API_IMG_URL || "";
@@ -253,8 +254,34 @@ const BlogPost = () => {
     ? new Date(post.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
     : "";
 
+  const pageTitle = post.metaTitle?.trim()
+    ? (post.metaTitle.toLowerCase().includes("styliste") ? post.metaTitle.trim() : `${post.metaTitle.trim()} | Styliste Couturier`)
+    : slug === "the-art-of-dressing-with-intention"
+    ? "The Art of Dressing with Intention | Styliste Couturier"
+    : `${post.title} | Styliste Couturier`;
+
+  const pageDescription = post.metaDescription?.trim()
+    ? post.metaDescription.trim()
+    : slug === "the-art-of-dressing-with-intention"
+    ? "Discover how intentional clothing choices can reflect your personal style, suit different occasions and help you build a thoughtful wardrobe with Styliste Couturier."
+    : (post.excerpt || post.summary || `Read ${post.title} on Styliste Couturier blog.`);
+
+  const pageKeywords = post.metaKeywords?.trim()
+    ? post.metaKeywords.trim()
+    : slug === "the-art-of-dressing-with-intention"
+    ? "intentional dressing, personal styling, fashion tips, capsule wardrobe, luxury ethnic wear"
+    : undefined;
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
+      <SEO
+        title={pageTitle}
+        description={pageDescription}
+        keywords={pageKeywords}
+        canonical={`https://styliste-couturier.com/blog/${slug}`}
+        ogType="article"
+        ogImage={post.coverUrl ? imgUrl(post.coverUrl) : undefined}
+      />
       <Navbar />
 
       {/* Hero */}
@@ -276,7 +303,9 @@ const BlogPost = () => {
             <div className="flex flex-wrap gap-3 mb-6">
               <span className="px-4 py-1.5 bg-sage text-white text-xs font-sans tracking-wide uppercase rounded-full">{post.category}</span>
             </div>
-            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-white leading-tight max-w-4xl mb-6">{post.title}</h1>
+            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-white leading-tight max-w-4xl mb-6">
+              {slug === "the-art-of-dressing-with-intention" ? "The Art of Dressing with Intention" : post.title}
+            </h1>
             <div className="flex flex-wrap items-center gap-6 text-white/80 text-sm">
               <div className="flex items-center gap-2"><Calendar className="w-4 h-4" strokeWidth={1.5} />{dateStr}</div>
               <div className="flex items-center gap-2"><Clock className="w-4 h-4" strokeWidth={1.5} />{post.readTime}</div>

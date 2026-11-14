@@ -1390,6 +1390,7 @@ import {
 } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
 import { useState, useEffect, useCallback } from 'react';
+import { getProductPath } from '../../utils/productUrl';
 
 // ----------------------------------------------------------------------
 // HELPER: Fix Image URLs
@@ -1717,7 +1718,7 @@ const CartPage = () => {
                 >
                   <div className="flex gap-6">
                     {/* Image */}
-                    <Link to={`/products/${item.productId}`}>
+                    <Link to={getProductPath(item.productId)}>
                       <div className="w-32 h-32 rounded-xl overflow-hidden glass-card flex-shrink-0 relative">
                         <img
                           src={imageUrl}
@@ -1733,7 +1734,7 @@ const CartPage = () => {
                     {/* Details */}
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
-                        <Link to={`/products/${item.productId}`}>
+                        <Link to={getProductPath(item.productId)}>
                           <h3 className="text-lg font-semibold text-dark-700 hover:text-primary-400 transition-colors">
                             {item.name || 'Unnamed Product'}
                           </h3>

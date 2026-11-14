@@ -6,6 +6,7 @@ import heroBlog from "../../assets/hero-blog.jpg";
 import { Footer } from "../../components/layout/Footer";
 import Navbar from "../../components/layout/Navbar";
 import { blogPublicApi, type PublicBlogSummary } from "../../api/blogApi";
+import SEO from "../../components/common/SEO";
 
 const IMG_BASE = import.meta.env.VITE_API_IMG_URL || "";
 function imgUrl(src: string) {
@@ -61,6 +62,12 @@ const Blog = () => {
 
   return (
     <main className="bg-background text-foreground">
+      <SEO
+        title="Fashion Tips & Saree Upcycling Ideas | Styliste Couturier"
+        description="Explore fashion inspiration, styling ideas and tips on dressing with intention from Styliste Couturier, a custom fashion boutique in Thane."
+        keywords="Fashion Tips and Saree Upcycling"
+        canonical="https://styliste-couturier.com/blog"
+      />
       <Navbar />
 
       {/* Hero Section */}
@@ -75,8 +82,14 @@ const Blog = () => {
               <div className="w-8 h-px bg-primary-foreground/60" />
               <p className="text-primary-foreground/80 font-sans tracking-[0.3em] text-xs uppercase">Our Blog</p>
             </motion.div>
-            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8 text-primary-foreground">
-              Fashion<br /><span className="italic text-accent">Insights</span>
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8 text-primary-foreground"
+              aria-label="Fashion, Styling & Designer Wear Tips"
+            >
+              Fashion, Styling &amp;<br /><span className="italic text-accent">Designer Wear Tips</span>
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-primary-foreground/80 text-lg leading-relaxed max-w-2xl">
               Discover styling tips, fashion trends, and expert advice from our team of designers and tailoring professionals.

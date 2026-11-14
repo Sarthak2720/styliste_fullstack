@@ -69,6 +69,12 @@ public class BlogPost {
     private BlogStatus status;
     @Column(nullable=false, columnDefinition="MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String sections;
+    @Column(name="meta_title", length=500)
+    private String metaTitle;
+    @Column(name="meta_description", columnDefinition="TEXT")
+    private String metaDescription;
+    @Column(name="meta_keywords", length=1000)
+    private String metaKeywords;
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="created_by")
     private User createdBy;
@@ -134,6 +140,18 @@ public class BlogPost {
         return this.sections;
     }
 
+    public String getMetaTitle() {
+        return this.metaTitle;
+    }
+
+    public String getMetaDescription() {
+        return this.metaDescription;
+    }
+
+    public String getMetaKeywords() {
+        return this.metaKeywords;
+    }
+
     public User getCreatedBy() {
         return this.createdBy;
     }
@@ -184,6 +202,18 @@ public class BlogPost {
 
     public void setSections(String sections) {
         this.sections = sections;
+    }
+
+    public void setMetaTitle(String metaTitle) {
+        this.metaTitle = metaTitle;
+    }
+
+    public void setMetaDescription(String metaDescription) {
+        this.metaDescription = metaDescription;
+    }
+
+    public void setMetaKeywords(String metaKeywords) {
+        this.metaKeywords = metaKeywords;
     }
 
     public void setCreatedBy(User createdBy) {
@@ -317,7 +347,7 @@ public class BlogPost {
     public BlogPost() {
     }
 
-    public BlogPost(Long id, String title, String slug, String category, String excerpt, String coverUrl, String author, String readTime, BlogStatus status, String sections, User createdBy, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public BlogPost(Long id, String title, String slug, String category, String excerpt, String coverUrl, String author, String readTime, BlogStatus status, String sections, String metaTitle, String metaDescription, String metaKeywords, User createdBy, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.slug = slug;
@@ -328,6 +358,9 @@ public class BlogPost {
         this.readTime = readTime;
         this.status = status;
         this.sections = sections;
+        this.metaTitle = metaTitle;
+        this.metaDescription = metaDescription;
+        this.metaKeywords = metaKeywords;
         this.createdBy = createdBy;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;

@@ -1,14 +1,20 @@
 import { Footer } from "../../components/layout/Footer";
 import Navbar from "../../components/layout/Navbar";
+import SEO from "../../components/common/SEO";
 
 const RefundPolicy = () => {
   return (
     <div className="bg-background py-24">
-<Navbar />
+      <SEO
+        title="Refund Policy | Styliste Couturier"
+        description="Review the Styliste Couturier refund and return policy to understand the applicable conditions for purchases, returns, refunds and related requests."
+        canonical="https://styliste-couturier.com/refund-policy"
+      />
+      <Navbar />
       {/* ================= PAGE HEADING ================= */}
       <div className="container mx-auto px-6 max-w-4xl">
         <h1 className="font-serif text-4xl md:text-5xl text-center mb-2 text-foreground">
-          Refund & Cancellation Policy
+          Refund and Return Policy
         </h1>
 
         <p className="text-center text-muted-foreground mb-14">

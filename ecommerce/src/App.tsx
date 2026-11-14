@@ -235,7 +235,7 @@ import About from './pages/public/About';
 import Contact from './pages/public/ContactUs';
 import Appointment from './pages/public/AppointmentBooking';
 import SizeGuide from './pages/public/SizeGuide';
-import services from './pages/public/Services';
+import Services from './pages/public/Services';
 import PrivacyPolicy from './pages/public/PrivacyPolicy';
 import TermsOfService from './pages/public/TermsAndConditions';
 import RefundPolicy from './pages/public/RefundPolicy';
@@ -323,11 +323,14 @@ function App() {
         <Route path="/products/:id" element={<ProductDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
+        <Route path="/about-us" element={<About />} />
+        <Route path="/about" element={<Navigate to="/about-us" replace />} />
+        <Route path="/contact-us" element={<Contact />} />
+        <Route path="/contact" element={<Navigate to="/contact-us" replace />} />
         <Route path="/appointment" element={<Appointment />} />
-        <Route path="/sizeGuide" element={<SizeGuide />} />
-        <Route path="/services" element={services()} />
+        <Route path="/size-guide" element={<SizeGuide />} />
+        <Route path="/sizeGuide" element={<Navigate to="/size-guide" replace />} />
+        <Route path="/services" element={<Services />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/refund-policy" element={<RefundPolicy />} />

@@ -3,6 +3,7 @@
 
 import { Footer } from "../../components/layout/Footer";
 import Navbar from "../../components/layout/Navbar";
+import SEO from "../../components/common/SEO";
 
 // const PrivacyPolicy = () => {
 //   return (
@@ -181,7 +182,12 @@ import Navbar from "../../components/layout/Navbar";
 const PrivacyPolicy = () => {
   return (
     <div className="bg-background py-24">
-<Navbar />
+      <SEO
+        title="Privacy Policy | Styliste Couturier"
+        description="Learn how Styliste Couturier handles personal information and privacy when you visit the website, contact the boutique or use its online services."
+        canonical="https://styliste-couturier.com/privacy-policy"
+      />
+      <Navbar />
       {/* ================= PAGE HEADING ================= */}
       <div className="container mx-auto px-6 max-w-4xl">
         <h1 className="font-serif text-4xl md:text-5xl text-center mb-2 text-foreground">

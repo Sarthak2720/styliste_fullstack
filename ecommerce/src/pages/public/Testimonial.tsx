@@ -601,6 +601,7 @@ import {
 
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
+import SEO from "../../components/common/SEO";
 
 import desktopVideo from "../../assets/STYLISTE.mp4";
 import mobileVideo from "../../assets/STYLISTE.mp4";
@@ -965,6 +966,13 @@ const Testimonials = () => {
 
   return (
     <main>
+      <SEO
+        title="Customer Reviews & Testimonials | Styliste Couturier"
+        description="Read customer experiences with Styliste Couturier for custom stitching, bridal outfits and saree transformations in Thane and Mulund."
+        keywords="Styliste Couturier Reviews"
+        canonical="https://styliste-couturier.com/testimonials"
+      />
+      <h1 className="sr-only">Customer Reviews of Styliste Couturier</h1>
       <Navbar />
 
       {/* ================= HERO TEXT ================= */}

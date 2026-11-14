@@ -85,7 +85,7 @@ public class BlogService {
         String slug = this.generateUniqueSlug(request.getTitle());
         String sectionsJson = this.serializeSections(request.getSections());
         BlogStatus status = this.parseStatus(request.getStatus());
-        BlogPost post = BlogPost.builder().title(request.getTitle().trim()).slug(slug).category(request.getCategory().trim()).excerpt(request.getExcerpt().trim()).coverUrl(request.getCoverUrl()).author(request.getAuthor().trim()).readTime(request.getReadTime()).status(status).sections(sectionsJson).createdBy(admin).build();
+        BlogPost post = BlogPost.builder().title(request.getTitle().trim()).slug(slug).category(request.getCategory().trim()).excerpt(request.getExcerpt().trim()).coverUrl(request.getCoverUrl()).author(request.getAuthor().trim()).readTime(request.getReadTime()).status(status).sections(sectionsJson).metaTitle(request.getMetaTitle()).metaDescription(request.getMetaDescription()).metaKeywords(request.getMetaKeywords()).createdBy(admin).build();
         post = (BlogPost)this.blogRepository.save(post);
         log.info("Blog post {} created by admin {}", post.getId(), adminUserId);
         return this.mapToDTO(post);
@@ -107,6 +107,9 @@ public class BlogService {
         post.setReadTime(request.getReadTime());
         post.setStatus(this.parseStatus(request.getStatus()));
         post.setSections(this.serializeSections(request.getSections()));
+        post.setMetaTitle(request.getMetaTitle());
+        post.setMetaDescription(request.getMetaDescription());
+        post.setMetaKeywords(request.getMetaKeywords());
         post = (BlogPost)this.blogRepository.save(post);
         log.info("Blog post {} updated", id);
         return this.mapToDTO(post);
@@ -192,11 +195,11 @@ public class BlogService {
     }
 
     private BlogPostDTO mapToDTO(BlogPost p) {
-        return BlogPostDTO.builder().id(p.getId()).title(p.getTitle()).slug(p.getSlug()).category(p.getCategory()).excerpt(p.getExcerpt()).coverUrl(p.getCoverUrl()).author(p.getAuthor()).readTime(p.getReadTime()).status(p.getStatus().name()).sections(this.deserializeSections(p.getSections())).createdAt(p.getCreatedAt()).updatedAt(p.getUpdatedAt()).build();
+        return BlogPostDTO.builder().id(p.getId()).title(p.getTitle()).slug(p.getSlug()).category(p.getCategory()).excerpt(p.getExcerpt()).coverUrl(p.getCoverUrl()).author(p.getAuthor()).readTime(p.getReadTime()).status(p.getStatus().name()).sections(this.deserializeSections(p.getSections())).metaTitle(p.getMetaTitle()).metaDescription(p.getMetaDescription()).metaKeywords(p.getMetaKeywords()).createdAt(p.getCreatedAt()).updatedAt(p.getUpdatedAt()).build();
     }
 
     private BlogPostDTO mapToPublicDTO(BlogPost p) {
-        return BlogPostDTO.builder().id(p.getId()).title(p.getTitle()).slug(p.getSlug()).category(p.getCategory()).excerpt(p.getExcerpt()).coverUrl(p.getCoverUrl()).author(p.getAuthor()).readTime(p.getReadTime()).sections(this.deserializeSections(p.getSections())).createdAt(p.getCreatedAt()).build();
+        return BlogPostDTO.builder().id(p.getId()).title(p.getTitle()).slug(p.getSlug()).category(p.getCategory()).excerpt(p.getExcerpt()).coverUrl(p.getCoverUrl()).author(p.getAuthor()).readTime(p.getReadTime()).sections(this.deserializeSections(p.getSections())).metaTitle(p.getMetaTitle()).metaDescription(p.getMetaDescription()).metaKeywords(p.getMetaKeywords()).createdAt(p.getCreatedAt()).build();
     }
 
     private BlogPostListDTO mapToListDTO(BlogPost p) {

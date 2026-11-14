@@ -177,6 +177,9 @@ const baseMeta = {
   author: "Babita Dahal",
   date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
   readTime: "5 min read",
+  metaTitle: "",
+  metaDescription: "",
+  metaKeywords: "",
 };
 
 const inputStyle = { width: "100%", border: `1px solid ${border}`, borderRadius: 8, padding: 8, fontSize: 14, outline: "none", boxSizing: "border-box" };
@@ -283,6 +286,8 @@ function ImageUpload({ value, onChange, label = "Image" }) {
 /* ─── OG Preview ─── */
 function OGPreview({ meta }) {
   const imgSrc = meta.cover && meta.cover.length > 0 ? meta.cover : "";
+  const displayTitle = meta.metaTitle?.trim() || meta.title || "Post title";
+  const displayDesc = meta.metaDescription?.trim() || meta.excerpt || "Short description";
   return (
     <div style={{ border: `1px solid ${border}`, borderRadius: 12, overflow: "hidden", background: white, maxWidth: 400, boxShadow: "0 4px 12px rgba(0,0,0,.08)" }}>
       <p style={{ margin: 0, padding: "8px 12px", fontSize: 10, color: muted, background: bg, borderBottom: `1px solid ${border}` }}>
@@ -297,9 +302,67 @@ function OGPreview({ meta }) {
       )}
       <div style={{ padding: 12 }}>
         <p style={{ margin: 0, fontSize: 11, color: muted, textTransform: "uppercase" }}>{meta.category || "Category"}</p>
-        <p style={{ margin: "4px 0 0", fontWeight: 700, color: ink, fontSize: 16, lineHeight: 1.25 }}>{meta.title || "Post title"}</p>
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: muted, lineHeight: 1.4 }}>{meta.excerpt || "Short description"}</p>
+        <p style={{ margin: "4px 0 0", fontWeight: 700, color: ink, fontSize: 16, lineHeight: 1.25 }}>{displayTitle}</p>
+        <p style={{ margin: "6px 0 0", fontSize: 13, color: muted, lineHeight: 1.4 }}>{displayDesc}</p>
       </div>
+    </div>
+  );
+}
+
+/* ─── Google SERP Preview ─── */
+function GoogleSERPPreview({ meta, slug }) {
+  const displayTitle = meta.metaTitle?.trim()
+    ? (meta.metaTitle.toLowerCase().includes("styliste") ? meta.metaTitle : `${meta.metaTitle} | Styliste Couturier`)
+    : `${meta.title || "Blog Post Title"} | Styliste Couturier`;
+
+  const displayDesc = meta.metaDescription?.trim()
+    ? meta.metaDescription
+    : (meta.excerpt || "Add a meta description to see how your blog will look in Google search results...");
+
+  const displaySlug = slug || (meta.title ? meta.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "blog-post");
+
+  return (
+    <div style={{ border: `1px solid ${border}`, borderRadius: 12, overflow: "hidden", background: white, padding: 16, boxShadow: "0 2px 8px rgba(0,0,0,.04)" }}>
+      <p style={{ margin: "0 0 12px", fontSize: 10, color: muted, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
+        Live Search Engine Preview (Google SERP)
+      </p>
+      
+      {/* Site URL bar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <div style={{ width: 26, height: 26, borderRadius: "50%", background: sageLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: sage }}>
+          S
+        </div>
+        <div style={{ fontSize: 12, lineHeight: 1.2 }}>
+          <p style={{ margin: 0, fontWeight: 600, color: "#202124" }}>Styliste Couturier</p>
+          <p style={{ margin: 0, color: "#4d5156", fontSize: 11, wordBreak: "break-all" }}>
+            https://styliste-couturier.com › blog › {displaySlug}
+          </p>
+        </div>
+      </div>
+
+      {/* Clickable Title */}
+      <h3 style={{ margin: "6px 0 6px", fontSize: 18, fontWeight: 500, color: "#1a0dab", lineHeight: 1.3, fontFamily: "arial, sans-serif" }}>
+        {displayTitle}
+      </h3>
+
+      {/* Meta Snippet */}
+      <p style={{ margin: 0, fontSize: 13, color: "#4d5156", lineHeight: 1.5, fontFamily: "arial, sans-serif", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        {displayDesc}
+      </p>
+
+      {/* Keywords Preview */}
+      {meta.metaKeywords && meta.metaKeywords.trim() ? (
+        <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${border}` }}>
+          <span style={{ fontSize: 10, color: muted, display: "block", marginBottom: 6, fontWeight: 600 }}>TARGET KEYWORDS:</span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {meta.metaKeywords.split(",").map((k, idx) => k.trim() && (
+              <span key={idx} style={{ fontSize: 11, background: sageLight, color: sage, padding: "3px 8px", borderRadius: 4, fontWeight: 500 }}>
+                #{k.trim()}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -710,6 +773,9 @@ function apiToEditor(blog) {
       author: blog.author || "",
       date: blog.createdAt ? new Date(blog.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "",
       readTime: blog.readTime || "",
+      metaTitle: blog.metaTitle || "",
+      metaDescription: blog.metaDescription || "",
+      metaKeywords: blog.metaKeywords || "",
     },
     sections: (blog.sections || []).map((s) => ({ ...s, data: migrateSectionData(s.data) })),
     sectionsCount: blog.sectionsCount,
@@ -727,6 +793,9 @@ function editorToApi(blog) {
     readTime: blog.meta.readTime,
     status: blog.status === "published" ? "PUBLISHED" : "DRAFT",
     sections: blog.sections,
+    metaTitle: blog.meta.metaTitle?.trim() || null,
+    metaDescription: blog.meta.metaDescription?.trim() || null,
+    metaKeywords: blog.meta.metaKeywords?.trim() || null,
   };
 }
 
@@ -1130,6 +1199,72 @@ export default function AdminBlogCreate() {
             <div>
               <label style={labelStyle}>OG / Social share preview</label>
               <OGPreview meta={current.meta} />
+            </div>
+          </div>
+        </div>
+
+        {/* SEO & Meta Tags form */}
+        <div style={{ background: white, borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,.08)", marginBottom: 16, overflow: "hidden" }}>
+          <div style={{ padding: "12px 16px", background: sageLight, borderBottom: `1px solid ${border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 13, background: sage, color: white, width: 22, height: 22, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>🔍</span>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: sage, textTransform: "uppercase" }}>SEO & Search Engine Optimization</p>
+            </div>
+            <span style={{ fontSize: 11, color: muted }}>Google SERP & Meta Tags</span>
+          </div>
+          <div style={{ padding: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+            <div>
+              {/* Meta Title */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label style={{ ...labelStyle, marginTop: 0 }}>Meta Title (SEO Title)</label>
+                <span style={{ fontSize: 11, fontWeight: 600, color: (current.meta.metaTitle?.length || 0) > 60 ? rose : muted }}>
+                  {current.meta.metaTitle?.length || 0} / 60
+                </span>
+              </div>
+              <input
+                placeholder={current.meta.title ? `${current.meta.title} (Default)` : "Custom SEO title..."}
+                value={current.meta.metaTitle || ""}
+                onChange={(e) => persist({ ...current, meta: { ...current.meta, metaTitle: e.target.value } })}
+                style={inputStyle}
+              />
+              <p style={{ margin: "4px 0 12px", fontSize: 11, color: muted }}>
+                Defaults to blog title if left empty. Optimal length: 50–60 characters.
+              </p>
+
+              {/* Meta Description */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label style={{ ...labelStyle, marginTop: 0 }}>Meta Description</label>
+                <span style={{ fontSize: 11, fontWeight: 600, color: (current.meta.metaDescription?.length || 0) > 160 ? rose : muted }}>
+                  {current.meta.metaDescription?.length || 0} / 160
+                </span>
+              </div>
+              <textarea
+                placeholder={current.meta.excerpt ? `${current.meta.excerpt} (Default)` : "Summary for Google search results..."}
+                value={current.meta.metaDescription || ""}
+                onChange={(e) => persist({ ...current, meta: { ...current.meta, metaDescription: e.target.value } })}
+                rows={3}
+                style={{ ...inputStyle, resize: "vertical" }}
+              />
+              <p style={{ margin: "4px 0 12px", fontSize: 11, color: muted }}>
+                Defaults to excerpt if left empty. Optimal length: 150–160 characters.
+              </p>
+
+              {/* Meta Keywords */}
+              <label style={{ ...labelStyle, marginTop: 0 }}>Meta Keywords (comma-separated)</label>
+              <input
+                placeholder="couture dresses, luxury fashion, wedding gowns"
+                value={current.meta.metaKeywords || ""}
+                onChange={(e) => persist({ ...current, meta: { ...current.meta, metaKeywords: e.target.value } })}
+                style={inputStyle}
+              />
+              <p style={{ margin: "4px 0 0", fontSize: 11, color: muted }}>
+                Separate tags with commas. Used by search bots & cataloging crawlers.
+              </p>
+            </div>
+
+            <div>
+              <label style={{ ...labelStyle, marginTop: 0, marginBottom: 6 }}>Google Search Result Preview</label>
+              <GoogleSERPPreview meta={current.meta} slug={current.slug} />
             </div>
           </div>
         </div>

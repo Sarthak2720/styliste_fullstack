@@ -1,14 +1,20 @@
 import { Footer } from "../../components/layout/Footer";
 import Navbar from "../../components/layout/Navbar";
+import SEO from "../../components/common/SEO";
 
 const TermsAndConditions = () => {
   return (
     <div className="bg-background py-24">
-<Navbar />
+      <SEO
+        title="Terms of Service | Styliste Couturier"
+        description="Read the terms and conditions governing the use of the Styliste Couturier website, including applicable terms for browsing, purchases and services."
+        canonical="https://styliste-couturier.com/terms-of-service"
+      />
+      <Navbar />
       {/* ================= PAGE HEADING ================= */}
       <div className="container mx-auto px-6 max-w-4xl">
         <h1 className="font-serif text-4xl md:text-5xl text-center mb-2 text-foreground">
-          Terms & Conditions
+          Terms of Service
         </h1>
 
         <p className="text-center text-muted-foreground mb-14">

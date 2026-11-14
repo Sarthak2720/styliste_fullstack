@@ -18,6 +18,9 @@ public class BlogPostRequest {
     private String readTime;
     private String status;
     private List<Map<String, Object>> sections;
+    private String metaTitle;
+    private String metaDescription;
+    private String metaKeywords;
 
     public String getTitle() {
         return this.title;
@@ -51,6 +54,18 @@ public class BlogPostRequest {
         return this.sections;
     }
 
+    public String getMetaTitle() {
+        return this.metaTitle;
+    }
+
+    public String getMetaDescription() {
+        return this.metaDescription;
+    }
+
+    public String getMetaKeywords() {
+        return this.metaKeywords;
+    }
+
     public void setTitle(String title) {
         this.title = title;
     }
@@ -81,6 +96,18 @@ public class BlogPostRequest {
 
     public void setSections(List<Map<String, Object>> sections) {
         this.sections = sections;
+    }
+
+    public void setMetaTitle(String metaTitle) {
+        this.metaTitle = metaTitle;
+    }
+
+    public void setMetaDescription(String metaDescription) {
+        this.metaDescription = metaDescription;
+    }
+
+    public void setMetaKeywords(String metaKeywords) {
+        this.metaKeywords = metaKeywords;
     }
 
     public boolean equals(Object o) {

@@ -25,6 +25,9 @@ public class BlogPostDTO {
     private String readTime;
     private String status;
     private List<Map<String, Object>> sections;
+    private String metaTitle;
+    private String metaDescription;
+    private String metaKeywords;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -68,6 +71,18 @@ public class BlogPostDTO {
 
     public List<Map<String, Object>> getSections() {
         return this.sections;
+    }
+
+    public String getMetaTitle() {
+        return this.metaTitle;
+    }
+
+    public String getMetaDescription() {
+        return this.metaDescription;
+    }
+
+    public String getMetaKeywords() {
+        return this.metaKeywords;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -116,6 +131,18 @@ public class BlogPostDTO {
 
     public void setSections(List<Map<String, Object>> sections) {
         this.sections = sections;
+    }
+
+    public void setMetaTitle(String metaTitle) {
+        this.metaTitle = metaTitle;
+    }
+
+    public void setMetaDescription(String metaDescription) {
+        this.metaDescription = metaDescription;
+    }
+
+    public void setMetaKeywords(String metaKeywords) {
+        this.metaKeywords = metaKeywords;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
@@ -238,7 +265,7 @@ public class BlogPostDTO {
     public BlogPostDTO() {
     }
 
-    public BlogPostDTO(Long id, String title, String slug, String category, String excerpt, String coverUrl, String author, String readTime, String status, List<Map<String, Object>> sections, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public BlogPostDTO(Long id, String title, String slug, String category, String excerpt, String coverUrl, String author, String readTime, String status, List<Map<String, Object>> sections, String metaTitle, String metaDescription, String metaKeywords, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.slug = slug;
@@ -249,6 +276,9 @@ public class BlogPostDTO {
         this.readTime = readTime;
         this.status = status;
         this.sections = sections;
+        this.metaTitle = metaTitle;
+        this.metaDescription = metaDescription;
+        this.metaKeywords = metaKeywords;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

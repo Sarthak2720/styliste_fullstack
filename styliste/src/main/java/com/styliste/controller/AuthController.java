@@ -60,7 +60,7 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-    @Value("${jwt.expiration:900000}")
+    @Value("${jwt.expiration:28800000}")
     private long jwtExpirationMs;
 
     @Value("${jwt.refresh-expiration:604800000}")
@@ -103,9 +103,18 @@ public class AuthController {
     }
 
     @PostMapping(value={"/refresh"})
-    public ResponseEntity<TokenRefreshResponse> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<TokenRefreshResponse> refreshToken(HttpServletRequest request, HttpServletResponse response, @RequestBody(required=false) TokenRefreshRequest body) {
         log.info("Refresh token request received");
         String refreshTokenValue = CookieHelper.getCookieValue(request, "refreshToken");
+        if ((refreshTokenValue == null || refreshTokenValue.isBlank()) && body != null) {
+            refreshTokenValue = body.getRefreshToken();
+        }
+        if (refreshTokenValue == null || refreshTokenValue.isBlank()) {
+            String header = request.getHeader("X-Refresh-Token");
+            if (header != null && !header.isBlank()) {
+                refreshTokenValue = header;
+            }
+        }
         if (refreshTokenValue == null || refreshTokenValue.isBlank()) {
             throw new com.styliste.exception.BadRequestException("Refresh token is missing");
         }

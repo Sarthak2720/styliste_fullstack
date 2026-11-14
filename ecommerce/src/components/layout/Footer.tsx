@@ -160,16 +160,16 @@ const footerLinks = {
     { name: "Alterations", href: "/services" },
   ],
   company: [
-    { name: "About Us", href: "/about" },
+    { name: "About Us", href: "/about-us" },
     { name: "Our Process", href: "/services" },
     { name: "Testimonials", href: "/testimonials" },
     {name: "Blog", href: "/blog"},
   ],
   support: [
-    { name: "Contact Us", href: "/contact" },
+    { name: "Contact Us", href: "/contact-us" },
     // { name: "Shipping", href: "/shipping" },
     // { name: "Returns", href: "/returns" },
-    { name: "Size Guide", href: "/sizeGuide" },
+    { name: "Size Guide", href: "/size-guide" },
     { name: "Book Appointment", href: "/appointment" },
   ],
  legal: [

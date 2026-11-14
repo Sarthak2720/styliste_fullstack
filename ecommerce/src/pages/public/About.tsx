@@ -643,7 +643,7 @@ import {
   HelpCircle,
   Loader2,
 } from "lucide-react";
-import { Helmet } from "react-helmet-async";
+import SEO from "../../components/common/SEO";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 import heroAbout from "../../assets/hero-about.jpg";
@@ -1109,13 +1109,13 @@ const About = () => {
 
   return (
     <main>
-      <Helmet>
-        <title>About Styliste Couturier | Premium Designer Boutique in Thane</title>
-        <meta
-          name="description"
-          content="Styliste Couturier is a Thane-based fashion boutique offering bespoke women’s wear, bridal tailoring, and personalized styling services."
-        />
-      </Helmet>
+      <SEO
+        title="About Styliste Couturier | Fashion Designers in Thane"
+        description="Meet the team at Styliste Couturier, Thane, offering personalised tailoring, custom-designed women's garments and old saree transformations."
+        keywords="Styliste Couturier Thane"
+        canonical="https://styliste-couturier.com/about-us"
+      />
+      <h1 className="sr-only">About Styliste Couturier - Custom Fashion in Thane</h1>
 
       {loading ? (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center text-[#5E6E54]">

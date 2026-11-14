@@ -211,6 +211,13 @@ export const login = createAsyncThunk<AuthResponse, LoginRequest, { rejectValue:
 
       console.log("[Thunk] 2. API Success!", response);
 
+      if (response.token) {
+        localStorage.setItem('authToken', response.token);
+      }
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
+
       localStorage.setItem('user', JSON.stringify({
         id: response.id,
         name: response.name,
@@ -232,6 +239,13 @@ export const signup = createAsyncThunk<AuthResponse, SignUpRequest, { rejectValu
     try {
       const response = await authApi.signup(userData);
 
+      if (response.token) {
+        localStorage.setItem('authToken', response.token);
+      }
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
+
       localStorage.setItem('user', JSON.stringify({
         id: response.id,
         name: response.name,
@@ -251,6 +265,13 @@ export const googleLogin = createAsyncThunk<AuthResponse, GoogleAuthRequest, { r
   async (payload, { rejectWithValue }) => {
     try {
       const response = await authApi.googleLogin(payload);
+
+      if (response.token) {
+        localStorage.setItem('authToken', response.token);
+      }
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
 
       localStorage.setItem('user', JSON.stringify({
         id: response.id,
@@ -272,7 +293,9 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   } catch (error) {
     console.error('Logout API call failed', error);
   } finally {
-    // 🔥 Clear auth storage (token is in secure cookie, cleared by server)
+    // 🔥 Clear auth storage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
 
     // 🔥 Clear cart storage
@@ -292,6 +315,8 @@ const authSlice = createSlice({
 
     /** Call this when token expires (401) - clears state without API call */
     forceLogout: (state) => {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
@@ -302,9 +327,11 @@ const authSlice = createSlice({
 
     loadUserFromStorage: (state) => {
       const userStr = localStorage.getItem('user');
+      const token = localStorage.getItem('authToken');
 
       if (userStr) {
         state.user = JSON.parse(userStr);
+        state.token = token || null;
         state.isAuthenticated = true;
       } else {
         state.isAuthenticated = false;

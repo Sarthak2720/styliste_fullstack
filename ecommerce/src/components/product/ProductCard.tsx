@@ -353,6 +353,7 @@ import { useNavigate } from "react-router-dom";
 import { useWishlist } from "../../context/WishlistContext";
 import useAuth from "../../hooks/useAuth";
 import { toast } from 'sonner';
+import { getProductPath } from '../../utils/productUrl';
 
 // --- CONFIGURATION ---
 const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
@@ -461,7 +462,7 @@ const remainingSizes = allSizes.length - visibleSizes.length;
   return (
     // <Link to={`/products/${product.id}`}>
     <div
-  onClick={() => navigate(`/products/${product.id}`)}
+  onClick={() => navigate(getProductPath(product.id))}
   className="relative bg-white rounded-lg overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-300 cursor-pointer"
 >
       <div 

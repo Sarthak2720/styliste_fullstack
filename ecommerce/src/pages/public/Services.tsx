@@ -397,6 +397,7 @@ import {
 } from "lucide-react";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
+import SEO from "../../components/common/SEO";
 
 import bespokeTailoringImg from "../../assets/Bespoke Tailoring.jpg";
 import designerDressesImg from "../../assets/Designer Dresses.jpg";
@@ -481,6 +482,12 @@ const processSteps = [
 const Services = () => {
   return (
     <main>
+      <SEO
+        title="Bespoke Tailoring & Saree Upcycling in Thane West"
+        description="Explore tailoring and fashion design services in Thane, including custom garments, bridal wear, saree transformations and alterations."
+        keywords="Bespoke Tailoring Thane West"
+        canonical="https://styliste-couturier.com/services"
+      />
       {/* Hero */}
       <section className="relative py-28 md:py-40 overflow-hidden bg-primary text-primary-foreground">
         <Navbar />
@@ -509,10 +516,11 @@ const Services = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8 text-primary-foreground"
+              aria-label="Custom Tailoring & Fashion Design Services in Thane"
             >
-              Complete Fashion
+              Custom Tailoring &amp;
               <br />
-              <span className="italic text-accent">Solutions</span>
+              <span className="italic text-accent">Fashion Design Services in Thane</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}

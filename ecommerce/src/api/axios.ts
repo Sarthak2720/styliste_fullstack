@@ -31,6 +31,11 @@ const axiosInstance: AxiosInstance = axios.create({
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     console.log(`[Interceptor] Preparing ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
@@ -54,6 +59,8 @@ axiosInstance.interceptors.response.use(
       // 1. If refresh call itself fails with 401, force logout immediately to prevent loop
       if (status === 401 && config.url?.includes('/auth/refresh')) {
         console.warn("[API] 401 Unauthorized during refresh - logging out user");
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
         localStorage.removeItem('cart');
         localStorage.removeItem('styliste_cart');
@@ -95,9 +102,19 @@ axiosInstance.interceptors.response.use(
           isRefreshing = true;
           console.log("[API] Access token expired. Initiating background refresh...");
           
+          const refreshToken = localStorage.getItem('refreshToken');
           return new Promise((resolve, reject) => {
-            axiosInstance.post('/auth/refresh')
-              .then(() => {
+            axiosInstance.post('/auth/refresh', refreshToken ? { refreshToken } : undefined)
+              .then((res: any) => {
+                if (res.data?.accessToken) {
+                  localStorage.setItem('authToken', res.data.accessToken);
+                  if (originalRequest.headers) {
+                    originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`;
+                  }
+                }
+                if (res.data?.refreshToken) {
+                  localStorage.setItem('refreshToken', res.data.refreshToken);
+                }
                 console.log("[API] Token refreshed successfully. Retrying original request.");
                 processQueue(null);
                 resolve(axiosInstance(originalRequest));
@@ -107,6 +124,8 @@ axiosInstance.interceptors.response.use(
                 processQueue(err);
                 
                 // Clear state on failure and redirect
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('refreshToken');
                 localStorage.removeItem('user');
                 localStorage.removeItem('cart');
                 localStorage.removeItem('styliste_cart');

@@ -3153,6 +3153,61 @@ import useAuth from "../../hooks/useAuth";
 import { cartApi } from "../../api/cartApi";
 import reviewApi, { type Review } from "../../api/reviewApi";
 import { useWishlist } from "../../context/WishlistContext";
+import SEO from '../../components/common/SEO';
+import { getProductSlug, slugify } from '../../utils/productUrl';
+
+interface ProductSeoInfo {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  h1: string;
+}
+
+const KNOWN_PRODUCT_SEO: Record<string, ProductSeoInfo> = {
+  'navy-blue-embellished-evening-gown': {
+    id: 5,
+    slug: 'navy-blue-embellished-evening-gown',
+    title: 'Navy Blue Evening Gown for Women in Thane | Styliste Couturier',
+    description: 'Shop the elegant navy blue evening gown with sequin embellishments, sheer sleeves and a flowing A-line silhouette at Styliste Couturier, Thane. Ideal for parties and receptions.',
+    h1: 'Elegant Navy Blue Embellished Evening Gown',
+  },
+  '5': {
+    id: 5,
+    slug: 'navy-blue-embellished-evening-gown',
+    title: 'Navy Blue Evening Gown for Women in Thane | Styliste Couturier',
+    description: 'Shop the elegant navy blue evening gown with sequin embellishments, sheer sleeves and a flowing A-line silhouette at Styliste Couturier, Thane. Ideal for parties and receptions.',
+    h1: 'Elegant Navy Blue Embellished Evening Gown',
+  },
+  'royal-purple-embroidered-anarkali-gown': {
+    id: 4,
+    slug: 'royal-purple-embroidered-anarkali-gown',
+    title: 'Royal Purple Anarkali Gown in Thane | Styliste Couturier',
+    description: 'Discover the royal purple Anarkali gown with golden embroidery and a floor-length silhouette at Styliste Couturier, Thane. A graceful choice for weddings and festive occasions.',
+    h1: 'Royal Purple Embroidered Anarkali Gown',
+  },
+  '4': {
+    id: 4,
+    slug: 'royal-purple-embroidered-anarkali-gown',
+    title: 'Royal Purple Anarkali Gown in Thane | Styliste Couturier',
+    description: 'Discover the royal purple Anarkali gown with golden embroidery and a floor-length silhouette at Styliste Couturier, Thane. A graceful choice for weddings and festive occasions.',
+    h1: 'Royal Purple Embroidered Anarkali Gown',
+  },
+  'yellow-silk-saree': {
+    id: 3,
+    slug: 'yellow-silk-saree',
+    title: 'Yellow Silk Saree in Thane | Styliste Couturier',
+    description: 'Explore an elegant yellow silk saree with a soft texture and graceful drape at Styliste Couturier, Thane. A vibrant choice for festivals, celebrations and traditional gatherings.',
+    h1: 'Elegant Yellow Silk Saree for Women',
+  },
+  '3': {
+    id: 3,
+    slug: 'yellow-silk-saree',
+    title: 'Yellow Silk Saree in Thane | Styliste Couturier',
+    description: 'Explore an elegant yellow silk saree with a soft texture and graceful drape at Styliste Couturier, Thane. A vibrant choice for festivals, celebrations and traditional gatherings.',
+    h1: 'Elegant Yellow Silk Saree for Women',
+  },
+};
 
 // ----------------------------------------------------------------------
 // HELPER: Fix Image URLs
@@ -3235,6 +3290,8 @@ interface MediaItem {
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
+  const productSeo = id ? KNOWN_PRODUCT_SEO[id] : undefined;
+  const resolvedId = productSeo ? productSeo.id : Number(id);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
@@ -3463,9 +3520,13 @@ const ProductDetailPage = () => {
 
   useEffect(() => {
     if (id) {
+      if (productSeo && id !== productSeo.slug) {
+        navigate(`/products/${productSeo.slug}`, { replace: true });
+        return;
+      }
       fetchProduct();
     }
-  }, [id]);
+  }, [id, productSeo, navigate]);
 
   // Video cleanup on unmount
   useEffect(() => {
@@ -3754,7 +3815,31 @@ useEffect(() => {
 
   const fetchProduct = async () => {
     try {
-      const data = await productApi.getProductById(Number(id));
+      let data: Product | null = null;
+      if (resolvedId && !isNaN(resolvedId)) {
+        data = await productApi.getProductById(resolvedId);
+      } else if (id) {
+        try {
+          const res = await productApi.getAllProducts(0, 100);
+          const found = res.content.find((p) => slugify(p.name) === id);
+          if (found) {
+            data = found;
+          }
+        } catch (err) {
+          console.error("Failed to find product by slug", err);
+        }
+      }
+
+      if (!data) {
+        setLoading(false);
+        return;
+      }
+
+      const targetSlug = getProductSlug(data);
+      if (id !== targetSlug) {
+        navigate(`/products/${targetSlug}`, { replace: true });
+      }
+
       console.log('Product data received:', {
         ...data,
         images: data.images?.length || 0,
@@ -4006,6 +4091,13 @@ const getCurrentMediaUrl = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEO
+        title={productSeo?.title || (product ? `${product.name} | Styliste Couturier` : 'Product Detail | Styliste Couturier')}
+        description={productSeo?.description || product?.description || 'Discover luxury fashion at Styliste Couturier.'}
+        canonical={`https://styliste-couturier.com/products/${productSeo?.slug || id}`}
+        ogType="product"
+        ogImage={product?.images?.[0] ? getImageUrl(product.images[0]) : undefined}
+      />
       <Navbar />
 
       {/* Fullscreen Video Modal */}
@@ -4461,7 +4553,7 @@ const getCurrentMediaUrl = () => {
 
             {/* Title */}
             <h1 className="text-2xl font-display font-bold text-foreground">
-              {product.name}
+              {productSeo?.h1 || product.name}
             </h1>
 
             {/* Rating */}

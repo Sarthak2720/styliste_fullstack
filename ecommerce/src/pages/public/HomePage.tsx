@@ -15,21 +15,20 @@ import { HowItWorksSection } from '../../components/home/HowItWorksSection';
 import { BookAppointmentSection } from '../../components/home/BookAppointmentSection';
 import { StatsSection } from '../../components/home/StatsSection';
 import { FAQSection } from '../../components/home/FAQSection';
-import { Helmet } from "react-helmet-async";
-
+import SEO from '../../components/common/SEO';
 
 const HomePage = () => {
   return (
     <div className="min-h-screen w-full">
-       {/* ✅ SEO START */}
-      <Helmet>
-        <title>Custom Fashion Boutique in Thane | Styliste Couturier</title>
-        <meta
-          name="description"
-          content="Premium custom stitching, bridal wear, and doorstep tailoring in Thane. Perfect fit, designer finish, and personalized fashion consultations."
-        />
-      </Helmet>
-      {/* ✅ SEO END */}
+      {/* SEO Metadata */}
+      <SEO
+        title="Styliste Couturier Thane | Designer Boutique & Tailoring"
+        description="Discover custom fashion at Styliste Couturier, Thane. Explore bespoke tailoring, bridal wear, designer outfits and saree-to-dress transformations."
+        keywords="Styliste Couturier Thane"
+        canonical="https://styliste-couturier.com/"
+      />
+      <h1 className="sr-only">Custom Fashion & Designer Boutique in Thane</h1>
+
       <Navbar />
       <Hero />
       <AwardsSection />

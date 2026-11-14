@@ -10,8 +10,8 @@ public class CookieHelper {
     public static void setCookie(HttpServletResponse response, String name, String value, int maxAgeSec) {
         ResponseCookie cookie = ResponseCookie.from(name, value)
                 .httpOnly(true)
-                .secure(true) // Should be secure (HTTPS/TLS)
-                .sameSite("Strict")
+                .secure(false) // Allow HTTP development and reverse-proxied production
+                .sameSite("Lax")
                 .path("/")
                 .maxAge(maxAgeSec)
                 .build();
@@ -21,8 +21,8 @@ public class CookieHelper {
     public static void clearCookie(HttpServletResponse response, String name) {
         ResponseCookie cookie = ResponseCookie.from(name, "")
                 .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
+                .secure(false)
+                .sameSite("Lax")
                 .path("/")
                 .maxAge(0)
                 .build();

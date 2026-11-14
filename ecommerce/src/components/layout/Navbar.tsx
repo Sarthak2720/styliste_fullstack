@@ -749,10 +749,10 @@ const handleLogout = async () => {
   [
     { name: "Home", path: "/" },
     { name: "Products", path: "/products" },
-    { name: "About", path: "/about" },
+    { name: "About", path: "/about-us" },
     { name: "Services", path: "/services" },
     { name: "Blog", path: "/blog" },
-    { name: "Contact us", path: "/contact" },
+    { name: "Contact us", path: "/contact-us" },
     { name: "Testimonials", path: "/testimonials" },
     ...(isAuthenticated
       ? [{ name: "Measurements", path: "/measurements" }]
@@ -1150,12 +1150,12 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
         {!isAdmin &&
           [
             { name: "Home", path: "/" },
-            { name: "About us", path: "/about" },
+            { name: "About us", path: "/about-us" },
             {name: "Products", path: "/products" },
             { name: "Services", path: "/services" },
             { name: "Blog", path: "/blog" },
             { name: "Testimonials", path: "/testimonials" },
-            { name: "Contact us", path: "/contact" },
+            { name: "Contact us", path: "/contact-us" },
             ...(isAuthenticated
               ? [{ name: "Measurements", path: "/measurements" }]
               : []),

@@ -320,10 +320,16 @@
 import { motion } from "framer-motion";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
+import SEO from "../../components/common/SEO";
 
 const SizeGuide = () => {
   return (
     <section>
+      <SEO
+        title="Women's Clothing Size Guide | Styliste Couturier"
+        description="Use the Styliste Couturier size guide to understand garment measurements and sizing when exploring women's clothing and custom tailoring options."
+        canonical="https://styliste-couturier.com/size-guide"
+      />
       <div className="min-h-screen bg-[#0E1113] py-20">
         <Navbar />
 
@@ -335,7 +341,7 @@ const SizeGuide = () => {
             className="max-w-6xl mx-auto"
           >
             <h1 className="font-serif text-4xl md:text-5xl mb-4 tracking-wide text-center text-white">
-              Size Guide for Womens
+              Women's Clothing Size Guide
             </h1>
 
             <p className="text-gray-400 text-center mb-12">

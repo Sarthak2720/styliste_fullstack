@@ -770,6 +770,7 @@ import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 import bookingApi from "../../api/BookingApi";
 import heroAppointment from "../../assets/hero-appointment.jpg";
+import SEO from "../../components/common/SEO";
 
 export default function AppointmentBooking() {
   type LoggedInUser = {
@@ -1118,6 +1119,12 @@ const validatePhone = (phone: string) => {
 
   return (
     <div>
+      <SEO
+        title="Book a Tailoring Appointment in Thane | Styliste Couturier"
+        description="Book an appointment with Styliste Couturier, Thane, to discuss custom outfits, bridal wear, alterations or transforming an old saree into a new design."
+        keywords="Doorstep Tailoring in Thane"
+        canonical="https://styliste-couturier.com/appointment"
+      />
       {/* Hero Section */}
       <section className="relative h-[56vh] min-h-[420px] max-h-[620px] overflow-hidden bg-primary text-primary-foreground">
         <Navbar />
@@ -1147,9 +1154,9 @@ const validatePhone = (phone: string) => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8 text-primary-foreground"
+              className="font-serif text-4xl sm:text-5xl md:text-6xl leading-[1.1] mb-8 text-primary-foreground"
             >
-              Book an Appointment
+              Book a Custom Tailoring Appointment in Thane
             </motion.h1>
 
             <motion.p

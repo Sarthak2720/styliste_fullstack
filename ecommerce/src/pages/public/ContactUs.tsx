@@ -6,6 +6,7 @@ import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 import ContactApi from "../../api/contactApi";
 import heroContact from "../../assets/hero-contact.jpg";
+import SEO from "../../components/common/SEO";
 
 
 const Contact = () => {
@@ -111,6 +112,12 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   return (
     <div className="bg-background text-foreground">
+      <SEO
+        title="Contact Styliste Couturier | Raymond Realty, Thane West"
+        description="Contact Styliste Couturier in Thane West for custom tailoring, designer garments, bridal wear and saree transformations. Get in touch with our team."
+        keywords="Boutique in Raymond Realty TenX Vibes Thane"
+        canonical="https://styliste-couturier.com/contact-us"
+      />
 
       {/* ================= HEADER ================= */}
       <section className="relative h-[56vh] min-h-[420px] max-h-[620px] overflow-hidden bg-primary text-primary-foreground">
@@ -142,9 +149,9 @@ const handleSubmit = async (e: React.FormEvent) => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8 text-primary-foreground"
+              className="font-serif text-4xl sm:text-5xl md:text-6xl leading-[1.1] mb-8 text-primary-foreground"
             >
-              Contact Us
+              Contact Styliste Couturier in Thane
             </motion.h1>
 
             <motion.p

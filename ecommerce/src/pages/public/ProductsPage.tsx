@@ -1024,6 +1024,7 @@ import { formatINR } from '../../utils/currency';
 // import { wishlistApi } from "../../api/wishlistApi";
 import productFilterApi from '../../api/productFilterApi';
 import { resolveColor } from "../../utils/colorResolver";
+import SEO from '../../components/common/SEO';
 
 const PAGE_SIZE_OPTIONS = [12, 16, 24, 32] as const;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -1292,6 +1293,12 @@ const ProductsPage = () => {
 
   return (
     <div className="min-h-screen text-foreground bg-background">
+      <SEO
+        title="Designer Dresses & Ethnic Wear | Styliste Couturier Thane"
+        description="Explore women's clothing at Styliste Couturier, Thane, including gowns, ethnic wear and sarees. Discover styles for different occasions."
+        keywords="Designer Dresses in Thane"
+        canonical="https://styliste-couturier.com/products"
+      />
       <Navbar />
 
       <div className="pt-12 pb-12 px-4 md:px-6 lg:px-8 w-full">
@@ -1299,7 +1306,7 @@ const ProductsPage = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-sage">
-              Explore Products
+              Explore Women's Clothing & Fashion Collection
             </h1>
             <p className="text-muted-foreground mt-2 text-sm md:text-base">
               Discover your next favorite style
