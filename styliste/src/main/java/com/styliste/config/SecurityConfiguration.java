@@ -108,10 +108,11 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authz -> authz
                         .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
 
-                        // Static resources
+                        // Static resources & SEO
                         .requestMatchers("/", "/index.html", "/*.js", "/*.css", "/*.json",
-                                "/*.png", "/favicon.ico", "/assets/**", "/static/**",
-                                "/uploads/**").permitAll()
+                                "/*.png", "/*.jpg", "/*.jpeg", "/*.svg", "/*.ico", "/favicon.ico",
+                                "/assets/**", "/static/**", "/uploads/**",
+                                "/robots.txt", "/sitemap.xml", "/*.txt", "/*.xml").permitAll()
 
                         // Public frontend pages and SPA routes
                         .requestMatchers(
