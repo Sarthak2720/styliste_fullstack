@@ -116,6 +116,7 @@ public class SecurityConfiguration {
 
                         // Public frontend pages and SPA routes
                         .requestMatchers(
+                                "/404", "/404/**",
                                 "/privacy-policy", "/terms-of-service", "/refund-policy",
                                 "/sizeGuide", "/shipping", "/returns", "/sustainability",
                                 "/dashboard", "/dashboard/**",
@@ -193,4 +194,6 @@ public class SecurityConfiguration {
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
     }
 }
+
+
 

@@ -278,11 +278,7 @@ import AdminAboutUsManagement from './pages/admin/AdminAboutUsManagement';
 import AdminAnnouncements from './pages/admin/AdminAnnouncements';
 import AnnouncementPopupModal from './components/common/AnnouncementPopupModal';
 
-const NotFound = () => (
-  <div className="p-8 text-center text-red-500">
-    404 - Page Not Found
-  </div>
-);
+import NotFoundPage from './pages/public/NotFoundPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -422,8 +418,8 @@ function App() {
 </Route>
 
         {/* Fallback */}
-        <Route path="/404" element={<NotFound />} />
-        <Route path="*" element={<Navigate to="/404" replace />} />
+        <Route path="/404" element={<NotFoundPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
 
       {/* Announcement Popup Modal on storefront pages */}

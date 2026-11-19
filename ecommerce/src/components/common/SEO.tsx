@@ -8,6 +8,7 @@ export interface SEOProps {
   canonical?: string;
   ogType?: string;
   ogImage?: string;
+  noindex?: boolean;
 }
 
 export const SEO: React.FC<SEOProps> = ({
@@ -17,6 +18,7 @@ export const SEO: React.FC<SEOProps> = ({
   canonical,
   ogType = 'website',
   ogImage = 'https://styliste-couturier.com/assets/logo-B41SV0Bu.png',
+  noindex = false,
 }) => {
   const currentUrl = canonical || (typeof window !== 'undefined' ? window.location.href : 'https://styliste-couturier.com');
 
@@ -27,6 +29,7 @@ export const SEO: React.FC<SEOProps> = ({
       <meta name="title" content={title} />
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
+      {noindex && <meta name="robots" content="noindex, follow" />}
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={ogType} />

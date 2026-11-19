@@ -11,7 +11,8 @@ public class SpaController {
         "/measurements/**", "/orders/**", "/shop/**", "/admin/**", "/dashboard/**", "/virtual-try-on/**",
         "/about/**", "/services", "/contact/**", "/testimonials/**", "/blog/**",
         "/privacy-policy", "/terms-of-service", "/refund-policy", "/sizeGuide",
-        "/shipping", "/returns", "/sustainability"
+        "/shipping", "/returns", "/sustainability",
+        "/404", "/404/**"
     })
     public String forward() {
         return "forward:/index.html";
