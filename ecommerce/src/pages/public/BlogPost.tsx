@@ -9,6 +9,7 @@ import { Footer } from "../../components/layout/Footer";
 import { blogPublicApi, type PublicBlogDetail } from "../../api/blogApi";
 import SEO from "../../components/common/SEO";
 import { cssSizeToPx, normalizeIconId, renderIconById } from "../../components/admin/iconHub";
+import "../../components/admin/rich-text.css";
 
 const IMG_BASE = import.meta.env.VITE_API_IMG_URL || "";
 function imgUrl(src: string) {
@@ -37,7 +38,8 @@ function isLightBg(hex: string | undefined): boolean {
 
 function sanitize(html: string) {
   return DOMPurify.sanitize(html || "", {
-    ADD_ATTR: ["data-icon", "data-icon-size", "data-icon-color", "contenteditable", "style"],
+    ADD_ATTR: ["data-icon", "data-icon-size", "data-icon-color", "contenteditable", "style", "target", "rel", "href"],
+    ADD_TAGS: ["span", "mark", "u", "s", "strike", "del", "blockquote"],
   });
 }
 
@@ -76,7 +78,7 @@ function RichHtml({ html, style, className }: { html: string; style?: React.CSSP
   return (
     <div
       ref={(node) => { ref.current = node; setTimeout(resolveIcons, 0); }}
-      className={className}
+      className={`rich-text-content ${className || ""}`}
       style={style}
       dangerouslySetInnerHTML={{ __html: sanitize(html) }}
     />

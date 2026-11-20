@@ -82,7 +82,10 @@ public class BlogService {
     public BlogPostDTO createBlog(Long adminUserId, BlogPostRequest request) {
         this.validateRequest(request);
         User admin = (User)this.userRepository.findById(adminUserId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        String slug = this.generateUniqueSlug(request.getTitle());
+        String slugInput = (request.getSlug() != null && !request.getSlug().trim().isEmpty())
+                ? request.getSlug().trim()
+                : request.getTitle();
+        String slug = this.generateUniqueSlug(slugInput, null);
         String sectionsJson = this.serializeSections(request.getSections());
         BlogStatus status = this.parseStatus(request.getStatus());
         BlogPost post = BlogPost.builder().title(request.getTitle().trim()).slug(slug).category(request.getCategory().trim()).excerpt(request.getExcerpt().trim()).coverUrl(request.getCoverUrl()).author(request.getAuthor().trim()).readTime(request.getReadTime()).status(status).sections(sectionsJson).metaTitle(request.getMetaTitle()).metaDescription(request.getMetaDescription()).metaKeywords(request.getMetaKeywords()).createdBy(admin).build();
@@ -92,12 +95,15 @@ public class BlogService {
     }
 
     public BlogPostDTO updateBlog(Long id, BlogPostRequest request) {
-        boolean titleChanged;
         this.validateRequest(request);
         BlogPost post = (BlogPost)this.blogRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Blog post not found"));
-        boolean bl = titleChanged = !post.getTitle().equals(request.getTitle().trim());
-        if (titleChanged) {
-            post.setSlug(this.generateUniqueSlug(request.getTitle()));
+        if (request.getSlug() != null && !request.getSlug().trim().isEmpty()) {
+            String requestedSlug = this.generateSlug(request.getSlug().trim());
+            if (!requestedSlug.equals(post.getSlug())) {
+                post.setSlug(this.generateUniqueSlug(requestedSlug, id));
+            }
+        } else if (!post.getTitle().equals(request.getTitle().trim())) {
+            post.setSlug(this.generateUniqueSlug(request.getTitle(), id));
         }
         post.setTitle(request.getTitle().trim());
         post.setCategory(request.getCategory().trim());
@@ -181,17 +187,24 @@ public class BlogService {
     }
 
     private String generateUniqueSlug(String title) {
+        return this.generateUniqueSlug(title, null);
+    }
+
+    private String generateUniqueSlug(String title, Long excludeId) {
         String baseSlug = this.generateSlug(title);
         if (baseSlug.isBlank()) {
             baseSlug = "post";
         }
         String candidate = baseSlug;
         int counter = 2;
-        while (this.blogRepository.existsBySlug(candidate)) {
+        while (true) {
+            java.util.Optional<BlogPost> existing = this.blogRepository.findBySlug(candidate);
+            if (existing.isEmpty() || (excludeId != null && existing.get().getId().equals(excludeId))) {
+                return candidate;
+            }
             candidate = baseSlug + "-" + counter;
             ++counter;
         }
-        return candidate;
     }
 
     private BlogPostDTO mapToDTO(BlogPost p) {

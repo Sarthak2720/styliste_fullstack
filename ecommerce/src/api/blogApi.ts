@@ -36,6 +36,7 @@ export interface BlogPostDetail extends Omit<BlogPostSummary, "sectionsCount"> {
 
 export interface BlogPostCreateRequest {
   title: string;
+  slug?: string;
   category: string;
   excerpt: string;
   coverUrl: string;

@@ -21,6 +21,15 @@ public class BlogPostRequest {
     private String metaTitle;
     private String metaDescription;
     private String metaKeywords;
+    private String slug;
+
+    public String getSlug() {
+        return this.slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
+    }
 
     public String getTitle() {
         return this.title;

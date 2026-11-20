@@ -132,7 +132,7 @@ function RichHtmlWithIcons({ html, style, className }) {
   return (
     <div
       ref={(node) => { ref.current = node; setTimeout(processIcons, 0); }}
-      className={className}
+      className={`rich-text-content ${className || ""}`}
       style={style}
       dangerouslySetInnerHTML={{ __html: sanitize(html || "") }}
     />
@@ -786,6 +786,7 @@ function apiToEditor(blog) {
 function editorToApi(blog) {
   return {
     title: blog.meta.title,
+    slug: blog.slug && blog.slug.trim() ? blog.slug.trim() : null,
     category: blog.meta.category,
     excerpt: blog.meta.excerpt,
     coverUrl: blog.meta.cover,
@@ -1263,6 +1264,26 @@ export default function AdminBlogCreate() {
             </div>
 
             <div>
+              {/* Blog URL Slug */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ ...labelStyle, marginTop: 0 }}>Custom URL Slug (SEO-friendly URL)</label>
+                <div style={{ display: "flex", alignItems: "center", background: "#f8faf7", border: `1px solid ${border}`, borderRadius: 8, padding: "0 10px", marginTop: 4 }}>
+                  <span style={{ fontSize: 12, color: muted, fontFamily: "monospace", whiteSpace: "nowrap" }}>/blog/</span>
+                  <input
+                    placeholder={current.meta.title ? current.meta.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "custom-slug"}
+                    value={current.slug || ""}
+                    onChange={(e) => {
+                      const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                      persist({ ...current, slug: val });
+                    }}
+                    style={{ ...inputStyle, border: "none", background: "transparent", padding: "8px 6px", fontFamily: "monospace", fontSize: 13, flex: 1 }}
+                  />
+                </div>
+                <p style={{ margin: "4px 0 0", fontSize: 11, color: muted }}>
+                  Full URL: <code style={{ color: sage, background: sageLight, padding: "1px 5px", borderRadius: 4 }}>https://styliste-couturier.com/blog/{current.slug || (current.meta.title ? current.meta.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "post")}</code>
+                </p>
+              </div>
+
               <label style={{ ...labelStyle, marginTop: 0, marginBottom: 6 }}>Google Search Result Preview</label>
               <GoogleSERPPreview meta={current.meta} slug={current.slug} />
             </div>
