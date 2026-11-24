@@ -105,18 +105,51 @@ public class GlobalExceptionHandler {
         return new ResponseEntity(errorResponse, (HttpStatusCode)HttpStatus.BAD_REQUEST);
     }
 
+    private static String cachedIndexHtml = null;
+
+    private synchronized String getIndexHtml() {
+        if (cachedIndexHtml != null) {
+            return cachedIndexHtml;
+        }
+        try {
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.ClassPathResource("static/index.html");
+            if (resource.exists()) {
+                cachedIndexHtml = org.springframework.util.StreamUtils.copyToString(resource.getInputStream(), java.nio.charset.StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            log.error("Failed to read static/index.html", e);
+        }
+        if (cachedIndexHtml == null) {
+            cachedIndexHtml = "<!doctype html><html><head><title>404 Not Found</title></head><body>404 Not Found</body></html>";
+        }
+        return cachedIndexHtml;
+    }
+
     @ExceptionHandler(value={org.springframework.web.servlet.resource.NoResourceFoundException.class})
-    public ResponseEntity<ErrorResponse> handleNoResourceFound(org.springframework.web.servlet.resource.NoResourceFoundException ex, WebRequest request) {
-        log.error("Resource not found exception: {}", ex.getMessage());
-        ErrorResponse errorResponse = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.NOT_FOUND.value())
-                .message("Static resource not found: " + ex.getResourcePath())
-                .path(request.getDescription(false).replace("uri=", ""))
-                .build();
+    public ResponseEntity<?> handleNoResourceFound(org.springframework.web.servlet.resource.NoResourceFoundException ex, WebRequest request) {
+        String path = request.getDescription(false).replace("uri=", "");
+        log.warn("Resource not found exception: {}", path);
+
+        // If it's an API request, return JSON
+        if (path.startsWith("/api/")) {
+            ErrorResponse errorResponse = ErrorResponse.builder()
+                    .timestamp(LocalDateTime.now())
+                    .status(HttpStatus.NOT_FOUND.value())
+                    .message("API resource not found: " + ex.getResourcePath())
+                    .path(path)
+                    .build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .body(errorResponse);
+        }
+
+        // For all web page requests, return index.html with HTTP status 404
+        // so that the browser renders the branded luxury 404 page (NotFoundPage.tsx)
+        // and SEO crawlers receive the real HTTP 404 Not Found status code!
+        String html = getIndexHtml();
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                .body(errorResponse);
+                .contentType(org.springframework.http.MediaType.TEXT_HTML)
+                .body(html);
     }
 
     @ExceptionHandler(value={Exception.class})
