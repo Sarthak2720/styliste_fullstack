@@ -106,7 +106,7 @@ public class SecurityConfiguration {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(authz -> authz
-                        .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
+                        .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
 
                         // Static resources & SEO
                         .requestMatchers("/", "/index.html", "/*.js", "/*.css", "/*.json",
@@ -114,16 +114,30 @@ public class SecurityConfiguration {
                                 "/assets/**", "/static/**", "/uploads/**",
                                 "/robots.txt", "/sitemap.xml", "/*.txt", "/*.xml").permitAll()
 
+                        // Error endpoint
+                        .requestMatchers("/error", "/404", "/404/**").permitAll()
+
                         // Public frontend pages and SPA routes
                         .requestMatchers(
-                                "/404", "/404/**",
+                                "/", "/home", "/login", "/login/**", "/signup", "/signup/**", "/forgot-password",
+                                "/about", "/about/**", "/about-us", "/about-us/**",
+                                "/contact", "/contact/**", "/contact-us", "/contact-us/**",
+                                "/appointment", "/appointment/**",
+                                "/products", "/products/**", "/shop", "/shop/**",
+                                "/size-guide", "/size-guide/**", "/sizeGuide", "/sizeGuide/**",
+                                "/services", "/services/**",
+                                "/testimonials", "/testimonials/**",
                                 "/privacy-policy", "/terms-of-service", "/refund-policy",
-                                "/sizeGuide", "/shipping", "/returns", "/sustainability",
+                                "/shipping", "/returns", "/sustainability",
+                                "/blog", "/blog/**",
+                                "/cart", "/cart/**", "/checkout", "/checkout/**", "/payment-status", "/payment-status/**",
                                 "/dashboard", "/dashboard/**",
+                                "/profile", "/profile/**",
                                 "/measurements", "/measurements/**",
                                 "/wishlist", "/wishlist/**",
                                 "/orders", "/orders/**",
-                                "/admin/**", "/user/**", "/shop/**", "/login", "/signup", "/appointment/**", "/products/**", "/about/**", "/services", "/contact/**", "/testimonials/**", "/measurements/**", "/orders/**", "/wishlist", "/cart", "/checkout", "/profile", "/virtual-try-on", "/virtual-try-on/**"
+                                "/virtual-try-on", "/virtual-try-on/**",
+                                "/admin", "/admin/**", "/user/**"
                         ).permitAll()
 
                         // Auth endpoints
@@ -141,7 +155,6 @@ public class SecurityConfiguration {
                         // Reviews & Contact
                         .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
-                        .requestMatchers("/api/contact/admin/**").authenticated()
 
                         // Razorpay webhook
                         .requestMatchers(HttpMethod.POST, "/api/orders/webhook/razorpay").permitAll()
@@ -152,10 +165,15 @@ public class SecurityConfiguration {
 
                         // Blogs
                         .requestMatchers(HttpMethod.GET, "/api/blogs/**").permitAll()
-                        .requestMatchers("/blog/**").permitAll()
 
-                        // Everything else requires auth
-                        .anyRequest().authenticated()
+                        // Admin APIs
+                        .requestMatchers("/api/admin/**", "/api/contact/admin/**").hasRole("ADMIN")
+
+                        // All other /api/** endpoints require authentication
+                        .requestMatchers("/api/**").authenticated()
+
+                        // All other non-API requests (frontend web pages, SPA routes, error pages, broken URLs) permitAll
+                        .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
