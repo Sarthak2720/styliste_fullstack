@@ -100,6 +100,51 @@ const PaymentStatusPage = () => {
     navigate('/checkout', { replace: true });
   }, [navigate, paymentState]);
 
+  // Google Customer Reviews - Post-purchase Survey Opt-in
+  useEffect(() => {
+    if (paymentState?.status === 'success' && paymentState?.orderId) {
+      const deliveryDate = new Date();
+      deliveryDate.setDate(deliveryDate.getDate() + 7);
+      const deliveryDateStr = deliveryDate.toISOString().split('T')[0];
+
+      const renderOptIn = () => {
+        const gapi = (window as unknown as {
+          gapi?: {
+            load?: (module: string, cb: () => void) => void;
+            surveyoptin?: { render?: (config: Record<string, unknown>) => void };
+          };
+        }).gapi;
+
+        if (gapi?.load) {
+          gapi.load('surveyoptin', () => {
+            if (gapi.surveyoptin?.render) {
+              gapi.surveyoptin.render({
+                merchant_id: 5910194905,
+                order_id: String(paymentState.orderId),
+                email: user?.email || '',
+                delivery_country: 'IN',
+                estimated_delivery_date: deliveryDateStr,
+                opt_in_style: 'CENTER_DIALOG',
+              });
+            }
+          });
+        }
+      };
+
+      const gapiObj = (window as unknown as { gapi?: unknown }).gapi;
+      if (gapiObj) {
+        renderOptIn();
+      } else {
+        const script = document.createElement('script');
+        script.src = 'https://apis.google.com/js/platform.js';
+        script.async = true;
+        script.defer = true;
+        script.onload = renderOptIn;
+        document.body.appendChild(script);
+      }
+    }
+  }, [paymentState?.status, paymentState?.orderId, user?.email]);
+
   const updatePaymentState = (nextState: PaymentStatusState) => {
     sessionStorage.setItem(PAYMENT_STATUS_STORAGE_KEY, JSON.stringify(nextState));
     setPaymentState(nextState);

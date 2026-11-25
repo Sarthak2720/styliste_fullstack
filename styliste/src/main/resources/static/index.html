@@ -36,7 +36,33 @@
     <meta property="twitter:title" content="STYLISTE | Futuristic Fashion">
     <meta property="twitter:description" content="Discover the future of fashion with STYLISTE E-commerce.">
     <meta property="twitter:image" content="https://styliste-couturier.com/assets/logo-B41SV0Bu.png">
-    <script type="module" crossorigin src="/assets/index-COBevtRj.js"></script>
+
+    <!-- Google Customer Reviews / Store Widget (Merchant ID: 5910194905) -->
+    <script id="merchantWidgetScript" src="https://www.gstatic.com/shopping/merchant/merchantwidget.js" defer></script>
+    <script type="text/javascript">
+      window.addEventListener('load', function () {
+        if (window.merchantwidget) {
+          window.merchantwidget.start({
+            position: 'RIGHT_BOTTOM',
+            region: 'IN'
+          });
+        }
+      });
+    </script>
+    <script src="https://apis.google.com/js/platform.js?onload=renderBadge" async defer></script>
+    <script>
+      window.renderBadge = function() {
+        var ratingBadgeContainer = document.createElement("div");
+        document.body.appendChild(ratingBadgeContainer);
+        window.gapi.load('ratingbadge', function() {
+          window.gapi.ratingbadge.render(ratingBadgeContainer, {
+            "merchant_id": 5910194905,
+            "position": "BOTTOM_RIGHT"
+          });
+        });
+      };
+    </script>
+    <script type="module" crossorigin src="/assets/index-DC5Z1dc3.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-B9ksSc2V.css">
   </head>
 
